@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="download_rate">#1f6c93</color>
+    <color name="load_rate">#1f6c93</color>
+    <color name="indexBackground">#ffff</color>
+    <color name="indexText">#4a4242</color>
+    <color name="IdentificationLine">#16339c</color>
+    <color name="localVideoListItem">#e8ebec</color>
+</resources>
