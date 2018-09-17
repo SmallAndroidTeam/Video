@@ -1118,6 +1118,36 @@ public void setProgressRightSlide(int position){
 }
 
   /**
+   * 隐藏下载和分享图标
+   */
+  public void hideDownloadAndShareIcon(){
+    android.util.Log.i(TAG, "hideDownloadAndShareIcon: ");
+   if(mDownloadButton!=null&&mShareButton!=null){
+     if(mDownloadButton.getVisibility()==VISIBLE){
+       mDownloadButton.setVisibility(GONE);
+     }
+     if(mShareButton.getVisibility()==VISIBLE){
+       mShareButton.setVisibility(GONE);
+     }
+   }
+  }
+  /**
+   * 显示下载和分享图标
+   */
+  public void showDownloadAndShareIcon(){
+    android.util.Log.i(TAG, "showDownloadAndShareIcon: ");
+    if(mDownloadButton!=null&&mShareButton!=null){
+      android.util.Log.i(TAG, "showDownloadAndShareIcon: ```");
+      if(mDownloadButton.getVisibility()==GONE){
+        mDownloadButton.setVisibility(VISIBLE);
+      }
+      if(mShareButton.getVisibility()==GONE){
+        mShareButton.setVisibility(VISIBLE);
+      }
+    }
+  }
+
+  /**
    * 获取系统亮度
    */
   private int getSystemBrightness(){

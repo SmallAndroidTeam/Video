@@ -31,6 +31,10 @@ public class VideoAdapter extends BaseAdapter{
         this.context=context;
     }
 
+    public void setVideoList(List<Video> videoList) {
+        this.videoList = videoList;
+    }
+
     public  List<Video> getVideoList() {
         return videoList;
     }

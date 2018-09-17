@@ -56,4 +56,18 @@ public class SdCardFragment extends Fragment {
     private void initView(View view) {
         videoListView = (ListView)view.findViewById(R.id.videoListView);
     }
+
+    //删除一个不存在的视频更新视图
+   public void deleteOneVideoUpateView(int position, String path){
+       List<Video> videoList= videoApaper.getVideoList();
+       if(position>=videoList.size()||position<0)
+       {
+           return;
+       }
+       if(videoList.get(position).getVideoPath().equals(path)){
+           videoList.remove(position);
+           videoApaper.setVideoList(videoList);
+           videoApaper.notifyDataSetChanged();
+       }
+   }
 }

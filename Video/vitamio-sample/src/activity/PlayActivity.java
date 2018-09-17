@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fragment.CollectFragment;
+import fragment.SdCardFragment;
 import io.vov.vitamio.LibsChecker;
 import io.vov.vitamio.MediaPlayer;
 import io.vov.vitamio.bean.Video;
@@ -75,8 +76,9 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
        /// videoView.setVideoURI(uri);
          videoView.setVideoCollect(this);//为了更新收藏视图
         videoView.setPosition(position);
-        videoView.setVideoList(videoList);
         videoView.setMediaController(new MediaController(this));
+        videoView.setVideoList(videoList);
+
         videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
@@ -85,7 +87,9 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
         });
         videoView.requestFocus();
 
+
         if(videoList.size()>0){
+            //下面暂时这样写
             if(CommonUtils.isNetUrl(videoList.get(0).getVideoPath())){//如果是播放的是网络视频
                 // 注册一个回调函数，在有警告或错误信息时调用。例如：开始缓冲、缓冲结束、下载速度变化。
                 videoView.setOnInfoListener(new MediaPlayer.OnInfoListener() {
@@ -143,7 +147,22 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
     public void updateView() {
        CollectFragment collectFragment= (CollectFragment) SaveCollectFragment.getCollectFragment();
         if(collectFragment!=null){
-       collectFragment.updateCollectFragmentView();
+         collectFragment.updateCollectFragmentView();
         }
     }
+
+    //删除一个视频更新视图
+    @Override
+    public void deleteOneVideoUpateView(int position, String path) {
+        CollectFragment collectFragment= (CollectFragment) SaveCollectFragment.getCollectFragment();
+        SdCardFragment sdCardFragment= (SdCardFragment) SaveCollectFragment.getSdCardFragment();
+        if(collectFragment!=null){
+               collectFragment.deleteOneVideoUpateView(position,path);
+        }
+        if(sdCardFragment!=null){
+           sdCardFragment.deleteOneVideoUpateView(position,path);
+        }
+    }
+
+
 }

@@ -19,6 +19,7 @@ import java.util.List;
 
 import getWidthOrHeight.Property;
 import io.vov.vitamio.demo.R;
+import saveDate.SaveCollectFragment;
 
 /**
  * Created by MR.XIE on 2018/9/7.
@@ -36,7 +37,9 @@ public class LocalFragment extends Fragment implements View.OnClickListener {
          initView(view);
          initPosition();//初始化位置
         fragmentList.add(new UDiskFragment());
-        fragmentList.add(new SdCardFragment());
+        SdCardFragment sdCardFragment=new SdCardFragment();
+        fragmentList.add(sdCardFragment);
+        SaveCollectFragment.setSdCardFragment(sdCardFragment);
         FragmentPagerAdapter fragmentPagerAdapter=new fragmentAdapter(getFragmentManager(),fragmentList);
         viewPager.setOffscreenPageLimit(2);//ViewPager的缓存为帧
         viewPager.setAdapter(fragmentPagerAdapter);

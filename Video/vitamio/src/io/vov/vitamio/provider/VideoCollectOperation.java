@@ -8,10 +8,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import io.vov.vitamio.bean.Video;
+import io.vov.vitamio.utils.CommonUtils;
 
 /**
  * 视频收藏操作（数据库操作）
@@ -65,6 +67,13 @@ public class VideoCollectOperation {
         if(cursor.moveToFirst()){
             do{
                  String videoPath=cursor.getString(cursor.getColumnIndex("VIDEO_PATH"));//路径
+                if(!CommonUtils.isNetUrl(videoPath)) {//如果不是网络地址
+                    if (!new File(videoPath).exists()) {//如果该路径不存在
+                        cancelCollectVide(videoPath);
+                        continue;
+                    }
+                }
+
                  String videoName=cursor.getString(cursor.getColumnIndex("VIDEO_NAME"));//名称
                  String resolution=cursor.getString(cursor.getColumnIndex("VIDEO_RESOLUTION"));//分辨率
                  long size= (long) cursor.getFloat(cursor.getColumnIndex("VIDEO_SIZE"));//大小

@@ -67,4 +67,30 @@ public class CollectFragment extends Fragment {
         videoCollectAdapter.notifyDataSetChanged();
     }
 
+
+    //删除一个不存在的视频更新视图
+    public void deleteOneVideoUpateView(int position, String path) {
+        List<Video> videoList= videoCollectAdapter.getVideoList();
+        if(position>=videoList.size()||position<0)
+        {
+            return;
+        }
+        if(videoList.get(position).getVideoPath().equals(path)){
+            videoList.remove(position);
+            videoCollectAdapter.setVideoList(videoList);
+            videoCollectAdapter.notifyDataSetChanged();
+            videoCollectOperation.cancelCollectVide(path);
+        }else{
+           for(Video video:videoList){
+               if(video.getVideoPath().equals(path)){
+                   videoCollectOperation.cancelCollectVide(path);
+                   updateCollectFragmentView();
+                   break;
+               }
+           }
+
+
+        }
+    }
+
 }
