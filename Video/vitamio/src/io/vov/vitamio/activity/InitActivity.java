@@ -56,7 +56,7 @@ public class InitActivity extends Activity {
 
       @Override
       protected Boolean doInBackground(Object... params) {
-        return Vitamio.initialize(InitActivity.this, getResources().getIdentifier("libarm", "raw", getPackageName()));
+        return null;
       }
 
       @Override
@@ -64,6 +64,7 @@ public class InitActivity extends Activity {
         if (inited) {
           uiHandler.sendEmptyMessage(0);
         }
+
       }
 
     }.execute();

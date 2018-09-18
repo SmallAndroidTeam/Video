@@ -1,22 +1,9 @@
 package activity;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.media.AudioManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.util.Log;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -24,14 +11,14 @@ import java.util.List;
 
 import fragment.CollectFragment;
 import fragment.SdCardFragment;
-import io.vov.vitamio.LibsChecker;
 import io.vov.vitamio.MediaPlayer;
+import io.vov.vitamio.Vitamio;
 import io.vov.vitamio.bean.Video;
 import io.vov.vitamio.demo.R;
-import io.vov.vitamio.utils.CommonUtils;
 import io.vov.vitamio.widget.MediaController;
 import io.vov.vitamio.widget.VideoView;
 import saveDate.SaveCollectFragment;
+import toast.oneToast;
 
 public class PlayActivity extends Activity implements VideoView.VideoCollect {
     private VideoView videoView;
@@ -49,8 +36,7 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
 //         //全屏
 //        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        if(!LibsChecker.checkVitamioLibs(this))
-            return;
+        Vitamio.isInitialized(this);
         setContentView(R.layout.play_video_fragment);
         if(getIntent()!=null){
              position= getIntent().getIntExtra("position",0);
@@ -88,56 +74,21 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
         videoView.requestFocus();
 
 
-        if(videoList.size()>0){
-            //下面暂时这样写
-            if(CommonUtils.isNetUrl(videoList.get(0).getVideoPath())){//如果是播放的是网络视频
-                // 注册一个回调函数，在有警告或错误信息时调用。例如：开始缓冲、缓冲结束、下载速度变化。
-                videoView.setOnInfoListener(new MediaPlayer.OnInfoListener() {
-                    @Override
-                    public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                        switch (what){
-                            case MediaPlayer.MEDIA_INFO_BUFFERING_START:
-                                if(videoView.isPlaying())
-                                {
-                                    videoView.pause();
-                                    progressBar.setVisibility(View.VISIBLE);
-                                    loadRateView.setText("");
-                                    downloadRateView.setText("");
-                                    downloadRateView.setVisibility(View.VISIBLE);
-                                    loadRateView.setVisibility(View.VISIBLE);
-
-                                }
-                                break;
-                            case MediaPlayer.MEDIA_INFO_DOWNLOAD_RATE_CHANGED:
-                                downloadRateView.setText(" "+extra+"kb/s"+" ");
-                                break;
-                            case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-                                videoView.start();
-                                progressBar.setVisibility(View.GONE);
-                                downloadRateView.setVisibility(View.GONE);
-                                loadRateView.setVisibility(View.GONE);
-                                break;
-                            default:
-                                break;
-                        }
-                        return true;
-                    }
-                });
-                //注册一个回调函数，在网络视频流缓冲变化时调用。
-                videoView.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
-                    @Override
-                    public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                        loadRateView.setText(percent+"%");
-                    }
-                });
-            }
-        }
-
         //注册一个回调函数，在视频预处理完成后调用。在视频预处理完成后被调用。此时视频的宽度、高度、宽高比信息已经获取到，此时可调用seekTo让视频从指定位置开始播放。
         videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
                 mp.setPlaybackSpeed(1.0f);
+            }
+        });
+
+        //注册一个回调函数，在异步操作调用过程中发生错误时调用。例如视频打开失败。
+        videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                oneToast.showMessage(PlayActivity.this,"视频打开失败");
+                videoView.next();
+                return true;
             }
         });
     }
@@ -162,6 +113,58 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
         if(sdCardFragment!=null){
            sdCardFragment.deleteOneVideoUpateView(position,path);
         }
+    }
+
+    //如果是网络视频则添加缓冲
+    @Override
+    public void addOnInfoAndOnBufferingUpdate() {
+        // 注册一个回调函数，在有警告或错误信息时调用。例如：开始缓冲、缓冲结束、下载速度变化。
+        videoView.setOnInfoListener(new MediaPlayer.OnInfoListener() {
+            @Override
+            public boolean onInfo(MediaPlayer mp, int what, int extra) {
+                switch (what){
+                    case MediaPlayer.MEDIA_INFO_BUFFERING_START:
+                        if(videoView.isPlaying())
+                        {
+                            videoView.pause();
+                            progressBar.setVisibility(View.VISIBLE);
+                            loadRateView.setText("");
+                            downloadRateView.setText("");
+                            downloadRateView.setVisibility(View.VISIBLE);
+                            loadRateView.setVisibility(View.VISIBLE);
+
+                        }
+                        break;
+                    case MediaPlayer.MEDIA_INFO_DOWNLOAD_RATE_CHANGED:
+                        downloadRateView.setText(" "+extra+"kb/s"+" ");
+                        break;
+                    case MediaPlayer.MEDIA_INFO_BUFFERING_END:
+                        videoView.start();
+                        progressBar.setVisibility(View.GONE);
+                        downloadRateView.setVisibility(View.GONE);
+                        loadRateView.setVisibility(View.GONE);
+                        break;
+                    default:
+                        break;
+                }
+                return true;
+            }
+        });
+        //注册一个回调函数，在网络视频流缓冲变化时调用。
+        videoView.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
+            @Override
+            public void onBufferingUpdate(MediaPlayer mp, int percent) {
+                loadRateView.setText(percent+"%");
+            }
+        });
+
+    }
+
+    //如果是本地视频则删除缓冲
+    @Override
+    public void deleteOnInfoAndOnBufferingUpdate() {
+    videoView.setOnInfoListener(null);
+    videoView.setOnBufferingUpdateListener(null);
     }
 
 

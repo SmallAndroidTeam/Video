@@ -123,7 +123,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     }
     private void seletTab(int i){
 
-        oneToast.showMessage(this,""+i);
+        //oneToast.showMessage(this,""+i);
         final FragmentManager fragmentManager=getSupportFragmentManager();
          FragmentTransaction fragmentTransaction=fragmentManager.beginTransaction();
         hideFragment(fragmentTransaction);

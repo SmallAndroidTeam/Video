@@ -28,6 +28,7 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Build.VERSION;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -38,6 +39,7 @@ import android.util.SparseArray;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import io.vov.vitamio.utils.ContextUtils;
 import io.vov.vitamio.utils.FileUtils;
 import io.vov.vitamio.utils.Log;
 
@@ -60,6 +62,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * href="http://developer.android.com/guide/topics/media/index.html">Audio and
  * Video</a> for additional help using MediaPlayer.
  */
+@SuppressLint("NewApi")
 public class MediaPlayer {
   public static final int CACHE_TYPE_NOT_AVAILABLE = 1;
   public static final int CACHE_TYPE_START = 2;
@@ -96,6 +99,10 @@ public class MediaPlayer {
    * MediaPlayer is resuming playback after filling buffers.
    */
   public static final int MEDIA_INFO_BUFFERING_END = 702;
+  public static final int MEDIA_INFO_FILE_OPEN_OK = 704;
+  public static final int MEDIA_INFO_UNKNOW_TYPE = 1001;
+  public static final int MEDIA_INFO_GET_CODEC_INFO_ERROR = 1002;
+  
   /**
    * The media cannot be seeked (e.g live stream)
    *
@@ -192,6 +199,8 @@ public class MediaPlayer {
     this(ctx, false);
   }
 
+  private static String path;
+  
   /**
    * Default constructor. The same as Android's MediaPlayer().
    * <p>

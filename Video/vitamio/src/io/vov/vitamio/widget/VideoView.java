@@ -118,8 +118,10 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
         if(mMediaController!=null){
           mMediaController.hideDownloadAndShareIcon();
         }
+         videoCollect.deleteOnInfoAndOnBufferingUpdate();//删除缓冲
        }else{
          mMediaController.showDownloadAndShareIcon();
+         videoCollect.addOnInfoAndOnBufferingUpdate();//添加缓冲
        }
      }
 
@@ -840,12 +842,14 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
             if(mMediaController!=null){
               mMediaController.hideDownloadAndShareIcon();//隐藏下载和分享图标
             }
+            videoCollect.deleteOnInfoAndOnBufferingUpdate();//删除缓冲
             break;
           }
         }else{
           if(mMediaController!=null){
             mMediaController.showDownloadAndShareIcon();//显示下载和分享图标
           }
+          videoCollect.addOnInfoAndOnBufferingUpdate();//添加缓冲
           break;
         }
       }
@@ -877,12 +881,14 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
             if(mMediaController!=null){
               mMediaController.hideDownloadAndShareIcon();//隐藏下载和分享图标
             }
+            videoCollect.deleteOnInfoAndOnBufferingUpdate();//删除缓冲
             break;
           }
         }else{
           if(mMediaController!=null){
             mMediaController.showDownloadAndShareIcon();//显示下载和分享图标
           }
+          videoCollect.addOnInfoAndOnBufferingUpdate();//添加缓冲
           break;
         }
       }
@@ -1243,5 +1249,7 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
   public interface  VideoCollect{
     void updateView();//添加或收藏更新视图
     void deleteOneVideoUpateView(int position,String path);//删除一个视频更新视图
+    void addOnInfoAndOnBufferingUpdate();//如果是网络视频则添加缓冲
+    void deleteOnInfoAndOnBufferingUpdate();//如果是本地视频则删除缓冲
   }
 }

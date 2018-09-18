@@ -2,8 +2,8 @@
 <resources>
     <color name="download_rate">#1f6c93</color>
     <color name="load_rate">#1f6c93</color>
-    <color name="indexBackground">#ffff</color>
+    <color name="indexBackground">#5875ca</color>
     <color name="indexText">#4a4242</color>
     <color name="IdentificationLine">#16339c</color>
-    <color name="localVideoListItem">#e8ebec</color>
+    <color name="localVideoListItem">#b6c6c3</color>
 </resources>
