@@ -5,20 +5,19 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+
 import fragment.CollectFragment;
 import fragment.LocalFragment;
+import fragment.DirectBroadFragment;
 import fragment.OnlineFragment;
 import fragment.PersonalCentreFragment;
-import getWidthOrHeight.Property;
 import io.vov.vitamio.demo.R;
 import saveDate.SaveCollectFragment;
-import toast.oneToast;
 
 public class MainActivity extends FragmentActivity implements View.OnClickListener {
 
@@ -35,10 +34,13 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private LinearLayout personalCentreLayout;
     private ImageView personalCentreImageView;
     private TextView personalCentreTextView;
-    private Fragment localFragment,onlineFragment,collectFragment,personalCentreFragment;
+    private Fragment localFragment,onlineFragment,collectFragment,personalCentreFragment,directBroadFragment;
     private FrameLayout mainFragment;
     private LinearLayout mainLinearLayout;
     public static final String TAG="movie";
+    private LinearLayout meettingLayout;
+    private ImageView meettingImageView;
+    private TextView meettingTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +49,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
 //        //全屏
 //       getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
         setContentView(R.layout.activity_main);
 
         ininView();
@@ -60,7 +61,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if(hasFocus){
-            initPosition();//初始化位置等属性
+           // initPosition();//初始化位置等属性
         }
 
     }
@@ -68,6 +69,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private void initClickListener() {
         localLayout.setOnClickListener(this);
         onlineLayout.setOnClickListener(this);
+        meettingLayout.setOnClickListener(this);
         collectLayout.setOnClickListener(this);
         personalCentreLayout.setOnClickListener(this);
     }
@@ -84,6 +86,10 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         onlineImageView = (ImageView)this.findViewById(R.id.onlineImageView);
         onlineTextView = (TextView)this.findViewById(R.id.onlineTextView);
 
+        meettingLayout = (LinearLayout)this.findViewById(R.id.meettingLayout);
+        meettingImageView = (ImageView)this.findViewById(R.id.meettingImageView);
+        meettingTextView = (TextView)this.findViewById(R.id.meettingTextView);
+
         collectLayout = (LinearLayout)this.findViewById(R.id.collectLayout);
         collectImageView = (ImageView)this.findViewById(R.id.collectImageView);
         collectTextView = (TextView)this.findViewById(R.id.collectTextView);
@@ -93,14 +99,14 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         personalCentreImageView = (ImageView)this.findViewById(R.id.PersonalCentreImageView);
         personalCentreTextView = (TextView)this.findViewById(R.id.PersonalCentreTextView);
     }
-    private void initPosition() {
-    int windowHeight= Property.getWindowHeight(this);
-    int mainLinearLayoutHeight=Property.getLinearLayoutHeight(mainLinearLayout);
-    //设置mainFragment的高度
-        //Log.i(TAG, "initPosition: -----------"+windowHeight+"/"+mainLinearLayoutHeight);
-        ViewGroup.LayoutParams layoutParams=(ViewGroup.LayoutParams)mainFragment.getLayoutParams();
-        layoutParams.height=windowHeight-mainLinearLayoutHeight;
-    }
+//    private void initPosition() {
+//    int windowHeight= Property.getWindowHeight(this);
+//    int mainLinearLayoutHeight=Property.getLinearLayoutHeight(mainLinearLayout);
+//    //设置mainFragment的高度
+//        //Log.i(TAG, "initPosition: -----------"+windowHeight+"/"+mainLinearLayoutHeight);
+//        ViewGroup.LayoutParams layoutParams=(ViewGroup.LayoutParams)mainFragment.getLayoutParams();
+//        layoutParams.height=windowHeight-mainLinearLayoutHeight;
+//    }
 
     @Override
     public void onClick(View view) {
@@ -111,11 +117,14 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
            case R.id.onlineLayout:
                seletTab(1);
                break;
-           case R.id.collectLayout:
+           case R.id.meettingLayout:
                seletTab(2);
                break;
-           case R.id.PersonalCentreLayout:
+           case R.id.collectLayout:
                seletTab(3);
+               break;
+           case R.id.PersonalCentreLayout:
+               seletTab(4);
                break;
                default:
                    break;
@@ -123,7 +132,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     }
     private void seletTab(int i){
 
-        //oneToast.showMessage(this,""+i);
+     //   oneToast.showMessage(this,""+i);
         final FragmentManager fragmentManager=getSupportFragmentManager();
          FragmentTransaction fragmentTransaction=fragmentManager.beginTransaction();
         hideFragment(fragmentTransaction);
@@ -145,6 +154,14 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                }
                break;
            case 2:
+               if(directBroadFragment==null){
+                   directBroadFragment=new DirectBroadFragment();
+                   fragmentTransaction.add(R.id.mainFragment,directBroadFragment);
+               }else{
+                   fragmentTransaction.show(directBroadFragment);
+               }
+               break;
+           case 3:
            if(collectFragment==null){
                 collectFragment=new CollectFragment();
                 fragmentTransaction.add(R.id.mainFragment,collectFragment);
@@ -153,7 +170,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
            }
            SaveCollectFragment.setCollectFragment(collectFragment);
            break;
-           case 3:
+           case 4:
                if(personalCentreFragment==null){
                    personalCentreFragment=new PersonalCentreFragment();
                    fragmentTransaction.add(R.id.mainFragment,personalCentreFragment);
@@ -174,6 +191,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
         if(onlineFragment!=null)
         {fragmentTransaction.hide(onlineFragment);
+        }
+        if(directBroadFragment!=null)
+        {fragmentTransaction.hide(directBroadFragment);
         }
         if(collectFragment!=null)
         {fragmentTransaction.hide(collectFragment);

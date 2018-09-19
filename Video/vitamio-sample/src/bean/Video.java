@@ -24,6 +24,7 @@ public class Video {
     private Bitmap Thumbnail=null;//缩略图
     private Integer progress=0;//播放进度(最大值为1000）
 
+
     public Video(String videoPath, String videoName, String resolution, long size, long date, long duration, Bitmap thumbnail, Integer progress) {
         this.videoPath = videoPath;
         this.videoName = videoName;

@@ -1,6 +1,7 @@
 package fragment;
 
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -54,21 +55,26 @@ public class LocalFragment extends Fragment implements View.OnClickListener {
     }
 
    //设置下划线的位置,i为tab的下标
+
     private void setOneTabPosition(int i){
         if(i==0){
-            int windowWidth= Property.getWindowWidth(this.getActivity());
-            int controlWidth=Property.getTableLayoutWidth(underline);
-            LinearLayout.LayoutParams underlineLayoutParams= (LinearLayout.LayoutParams) underline.getLayoutParams();
-            underlineLayoutParams.leftMargin=(windowWidth/2-controlWidth)/2;
-            underline.setLayoutParams(underlineLayoutParams);
-        }else if(i==1){
-            int windowWidth= Property.getWindowWidth(this.getActivity());
-            int controlWidth=Property.getTableLayoutWidth(underline);
-            LinearLayout.LayoutParams underlineLayoutParams= (LinearLayout.LayoutParams) underline.getLayoutParams();
-            underlineLayoutParams.leftMargin=windowWidth/2+(windowWidth/2-controlWidth)/2;
-            underline.setLayoutParams(underlineLayoutParams);
-        }
+//            int windowWidth= Property.getWindowWidth(this.getActivity());
+//            int controlWidth=Property.getTableLayoutWidth(underline);
+//            LinearLayout.LayoutParams underlineLayoutParams= (LinearLayout.LayoutParams) underline.getLayoutParams();
+//            underlineLayoutParams.leftMargin=(windowWidth/2-controlWidth)/2;
+//            underline.setLayoutParams(underlineLayoutParams);
+            uDiskView.setTextColor(getResources().getColor(R.color.indexTextSelect));
+            sdCardView.setTextColor(getResources().getColor(R.color.indexText));
 
+        }else if(i==1){
+            uDiskView.setTextColor(getResources().getColor(R.color.indexText));
+            sdCardView.setTextColor(getResources().getColor(R.color.indexTextSelect));
+//            int windowWidth= Property.getWindowWidth(this.getActivity());
+//            int controlWidth=Property.getTableLayoutWidth(underline);
+//            LinearLayout.LayoutParams underlineLayoutParams= (LinearLayout.LayoutParams) underline.getLayoutParams();
+//            underlineLayoutParams.leftMargin=windowWidth/2+(windowWidth/2-controlWidth)/2;
+//            underline.setLayoutParams(underlineLayoutParams);
+        }
     }
 
     private class fragmentAdapter extends FragmentPagerAdapter{

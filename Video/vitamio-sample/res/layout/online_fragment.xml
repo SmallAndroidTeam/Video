@@ -4,9 +4,16 @@
     android:layout_height="match_parent">
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="在线"
-        android:layout_gravity="center"
+        android:layout_height="wrap_content"
+        android:gravity="center"
         android:textColor="@color/indexText"
-        android:gravity="center"/>
+        android:background="@color/indexBackground"
+        android:textSize="30dp"
+        android:textStyle="bold"
+        android:text="在线视频"/>
+    <ListView
+        android:id="@+id/onloneVideoListView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </ListView>
 </LinearLayout>

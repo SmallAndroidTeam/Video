@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -20,32 +20,38 @@
         android:allowBackup="false"
         android:icon="@drawable/ic_launcher"
         android:label="@string/vitamio_demo_name"
-        android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-        >
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 
         <!-- Don't forgot InitActivity -->
         <activity
             android:name="io.vov.vitamio.activity.InitActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|keyboard|keyboardHidden|navigation"
             android:launchMode="singleTop"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:screenOrientation="landscape"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:windowSoftInputMode="stateAlwaysHidden" />
-        <activity android:name="activity.MainActivity"
+        <activity
+            android:name="activity.MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:process=":vitamio"
-            android:screenOrientation="landscape"
-            >
+            android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="activity.PlayActivity"
+        <activity
+            android:name="activity.PlayActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:process=":vitamio"
-            android:screenOrientation="landscape"></activity>
+            android:screenOrientation="landscape" />
+        <activity
+            android:name="activity.DirectBroadActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:process=":vitamio"
+            android:screenOrientation="landscape" />
     </application>
 
 </manifest>

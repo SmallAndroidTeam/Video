@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/mediacontroller_bg">
+    <TextView
+        android:id="@+id/directBroadcastTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="@color/indexText"
+        android:textSize="30dp"
+        android:textStyle="bold"
+        android:text="在线直播"
+        android:background="@color/indexBackground"
+     />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/directBroadcastTitle"
+        >
+        <ImageButton
+            android:id="@+id/directBroad_play_stop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="@drawable/mediacontroller_button"
+            android:contentDescription="@string/mediacontroller_play_pause"
+            android:src="@drawable/mediacontroller_play" />
+    </RelativeLayout>
+
+</RelativeLayout>

@@ -39,7 +39,8 @@ public class CommonUtils {
     public static boolean isNetUrl(String url) {
         boolean reault = false;
         if (url != null) {
-            if (url.toLowerCase().startsWith("http") || url.toLowerCase().startsWith("rtsp") || url.toLowerCase().startsWith("mms")) {
+            if (url.toLowerCase().startsWith("http") || url.toLowerCase().startsWith("rtsp") || url.toLowerCase().startsWith("mms")||
+                    url.toLowerCase().startsWith("rtmp")) {
                 reault = true;
             }
         }

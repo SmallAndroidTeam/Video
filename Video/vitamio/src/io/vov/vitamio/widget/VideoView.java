@@ -220,6 +220,7 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
   private Map<String, String> mHeaders;
   private int mBufSize;
   private GestureDetector mGestureDetector;//手势监听器
+  private String meettingPath=null;
   private OnCompletionListener mCompletionListener = new OnCompletionListener() {
     public void onCompletion(MediaPlayer mp) {
       Log.d("onCompletion");
@@ -408,9 +409,16 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
     return (mSurfaceHolder != null && mSurfaceHolder.getSurface().isValid());
   }
 
-
+  public void setMeettingPath(String meettingPath) {
+    this.meettingPath = meettingPath;
+  }
 
   public void setVideoPath(String path) {
+
+    if(meettingPath!=null&&meettingPath.contentEquals(path)){//如果地址为直播地址
+      videoCollect.addOnInfoAndOnBufferingUpdate();
+    }
+
     setVideoURI(Uri.parse(path));
   }
 
@@ -895,18 +903,28 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
 
       mMediaPlayer.start();
       mCurrentState = STATE_PLAYING;
+        if(videoList.size()>0){
 
-      mMediaPlayer.seekTo(videoList.get(position).getProgress()*videoList.get(position).getDuration()/1000);
-      if(mMediaController!=null){
+          mMediaPlayer.seekTo(videoList.get(position).getProgress()*videoList.get(position).getDuration()/1000);
+          if(mMediaController!=null){
 
-        mMediaController.setProgressRightSlide(videoList.get(position).getProgress());
-      }
-      android.util.Log.i(TAG, "start: "+videoList.get(position).getProgress());
+            mMediaController.setProgressRightSlide(videoList.get(position).getProgress());
+          }
+          //android.util.Log.i(TAG, "start: "+videoList.get(position).getProgress());
+        }
+
 
     }
     mTargetState = STATE_PLAYING;
   }
 
+  public void continuePlay(){
+    if (isInPlaybackState()) {
+        mMediaPlayer.start();
+        mCurrentState = STATE_PLAYING;
+    }
+    mTargetState = STATE_PLAYING;
+  }
   public void pause() {
     if (isInPlaybackState()) {
       if (mMediaPlayer.isPlaying()) {
@@ -928,10 +946,23 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
   private int VideoListSize(){
     return videoList.size();
   }
+  //设置播放进度
+  public void setProgress(){
+    if(isHaveVideoList()) {
+      int index = (position - 1) < 0 ? VideoListSize() - 1 : (position - 1);
+      videoList.get(index).setProgress(0);
+    }
+  }
   public void next() {
-    android.util.Log.i("movie", "----------------------------next ");
+
      if(isHaveVideoList()){
-       videoList.get(position).setProgress((int) (1000*mMediaPlayer.getCurrentPosition()/mMediaPlayer.getDuration()));
+       android.util.Log.i(TAG, "next: "+mMediaPlayer.getCurrentPosition()+"//"+mMediaPlayer.getDuration());
+       if(mMediaPlayer.getCurrentPosition()>=mMediaPlayer.getDuration()){
+         videoList.get(position).setProgress(0);
+       }else{
+         videoList.get(position).setProgress((int) (1000*mMediaPlayer.getCurrentPosition()/mMediaPlayer.getDuration()));
+       }
+
     position=(position+1)>=VideoListSize()?0:(position+1);
        while(videoList.size()>0)
        {
@@ -958,14 +989,17 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
          setVideoURI(Uri.parse(videoList.get(position).getVideoPath()));
          start();
        }
-
   }
   }
 
   public void prev() {
     android.util.Log.i("movie", "----------------------------prev ");
     if(isHaveVideoList()){
-      videoList.get(position).setProgress((int) (1000*mMediaPlayer.getCurrentPosition()/mMediaPlayer.getDuration()));
+      if(mMediaPlayer.getCurrentPosition()>=mMediaPlayer.getDuration()){
+        videoList.get(position).setProgress(0);
+      }else{
+        videoList.get(position).setProgress((int) (1000*mMediaPlayer.getCurrentPosition()/mMediaPlayer.getDuration()));
+      }
       position=(position-1)<0?VideoListSize()-1:(position-1);
       while(videoList.size()>0)
       {
@@ -1017,6 +1051,10 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
       }
       isLove=false;
     }else{
+      if(videoList.get(position).getDuration()!=mMediaPlayer.getDuration()){
+        videoList.get(position).setDuration(mMediaPlayer.getDuration());
+      }
+
         Video video=videoList.get(position);
         video.setDate(System.currentTimeMillis());
         video.setProgress((int) (1000*mMediaPlayer.getCurrentPosition()/mMediaPlayer.getDuration()));
@@ -1048,8 +1086,6 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
     android.util.Log.i("movie", "----------------------------share");
 
   }
-
-
 
   @Override
   public void setPlaybackSpeed(float speed) {

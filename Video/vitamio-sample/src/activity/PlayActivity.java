@@ -2,8 +2,11 @@ package activity;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -20,7 +23,7 @@ import io.vov.vitamio.widget.VideoView;
 import saveDate.SaveCollectFragment;
 import toast.oneToast;
 
-public class PlayActivity extends Activity implements VideoView.VideoCollect {
+public class PlayActivity extends Activity implements VideoView.VideoCollect, View.OnTouchListener {
     private VideoView videoView;
     private String path="http://www.modrails.com/videos/passenger_nginx.mov";
     private ProgressBar progressBar;
@@ -29,6 +32,8 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
     private static List<Video> videoList=new ArrayList<>();//播放的视频列表
     private  int position=0;//要播放视频的下标
     private final String TAG="movie";
+    private RelativeLayout playRelativeLayout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,6 +48,7 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
         }
         ininView();
         initVideo();
+
     }
 
     public static void setVideoList(List<Video> videoList) {
@@ -54,12 +60,17 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
             progressBar = (ProgressBar)this.findViewById(R.id.probar);
             downloadRateView = (TextView)this.findViewById(R.id.download_rate);
           loadRateView = (TextView)this.findViewById(R.id.load_rate);
+        playRelativeLayout = (RelativeLayout)this.findViewById(R.id.playRelativeLayout);
+        playRelativeLayout.setOnTouchListener(this);
     }
     private void initVideo() {
         // path= Environment.getExternalStorageDirectory().getPath()+"/Movies/"+"test.swf";
       //  Log.i(MainActivity.TAG, "initVideo:------------ "+path);
         // Uri uri=Uri.parse(path);
        /// videoView.setVideoURI(uri);
+        if(videoList==null&&videoList.size()<=0){
+            return;
+        }
          videoView.setVideoCollect(this);//为了更新收藏视图
         videoView.setPosition(position);
         videoView.setMediaController(new MediaController(this));
@@ -69,10 +80,10 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 videoView.next();
+                videoView.setProgress();
             }
         });
         videoView.requestFocus();
-
 
         //注册一个回调函数，在视频预处理完成后调用。在视频预处理完成后被调用。此时视频的宽度、高度、宽高比信息已经获取到，此时可调用seekTo让视频从指定位置开始播放。
         videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -124,22 +135,18 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
             public boolean onInfo(MediaPlayer mp, int what, int extra) {
                 switch (what){
                     case MediaPlayer.MEDIA_INFO_BUFFERING_START:
-                        if(videoView.isPlaying())
-                        {
                             videoView.pause();
                             progressBar.setVisibility(View.VISIBLE);
                             loadRateView.setText("");
                             downloadRateView.setText("");
                             downloadRateView.setVisibility(View.VISIBLE);
                             loadRateView.setVisibility(View.VISIBLE);
-
-                        }
                         break;
                     case MediaPlayer.MEDIA_INFO_DOWNLOAD_RATE_CHANGED:
                         downloadRateView.setText(" "+extra+"kb/s"+" ");
                         break;
                     case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-                        videoView.start();
+                        videoView.continuePlay();
                         progressBar.setVisibility(View.GONE);
                         downloadRateView.setVisibility(View.GONE);
                         loadRateView.setVisibility(View.GONE);
@@ -157,7 +164,6 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
                 loadRateView.setText(percent+"%");
             }
         });
-
     }
 
     //如果是本地视频则删除缓冲
@@ -167,5 +173,9 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect {
     videoView.setOnBufferingUpdateListener(null);
     }
 
-
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        videoView.onTouchEvent(event);
+        return true;
+    }
 }
