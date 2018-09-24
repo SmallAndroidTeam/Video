@@ -33,6 +33,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.ParcelUuid;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.transition.Slide;
 import android.util.AttributeSet;
@@ -193,9 +194,14 @@ public class MediaController extends FrameLayout {
 
   //设置是否喜欢
     public void setLove(boolean islove) {
+      if(mLoveButton==null){
+        return;
+      }
+
         if(islove){
   mLoveButton.setBackgroundResource(R.drawable.mediacontrol_love_selected);
         }else{
+
             mLoveButton.setBackgroundResource(R.drawable.mediacontrol_love);
         }
     }
@@ -220,6 +226,7 @@ public class MediaController extends FrameLayout {
       //android.util.Log.i(TAG, "onClick: 播放模式"+(mPlayModeListView != null)+"//"+(mPlayModeListView.getVisibility()==GONE));
 
       if (mPlayModeListView != null) {
+        hideAllTip();
     if(mPlayModeListView.getVisibility()==GONE)
     {
       mPlayModeListView.setVisibility(View.VISIBLE);
@@ -258,6 +265,7 @@ public class MediaController extends FrameLayout {
     @Override
     public void onClick(View view) {
       android.util.Log.i("movie", "onClick:mMedia_pb_voice ");
+      if(mMedia_pb_voice!=null)
       mMedia_pb_voice.setProgress(0);
       mAM.setStreamVolume(AudioManager.STREAM_MUSIC,0,0);
       show(sDefaultTimeout);
@@ -267,6 +275,7 @@ public class MediaController extends FrameLayout {
   private OnSeekBarChangeListener mMediaVoiceListener=new OnSeekBarChangeListener() {
     @Override
     public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+      if(mMedia_pb_voice!=null)
       mAM.setStreamVolume(AudioManager.STREAM_MUSIC,mMedia_pb_voice.getProgress(),0);
       showNoAnimal();
     }
@@ -287,11 +296,14 @@ public class MediaController extends FrameLayout {
 
     @Override
     public void onClick(View view) {
-      mContext.unregisterReceiver(mBatteryReceiver);
-      ((Activity)mContext).finish();
+
+      mPlayer.quit();
     }
   };
 
+ public  void unregisterReceiver(){
+   mContext.unregisterReceiver(mBatteryReceiver);
+ }
 
   //点击全屏按钮
   private View.OnClickListener mMediacontroller_video_siwch_screenListener=new View.OnClickListener(){
@@ -310,6 +322,7 @@ public class MediaController extends FrameLayout {
       final float[] speed={1.5f,2.0f,1.0f,0.5f,0.8f};//没有实现后退
       mPlayer.setPlaybackSpeed(speed[i]);
       hidePlayModeListView();
+      mPlayer.continuePlay();
       show(sDefaultTimeout);
     }
   };
@@ -335,11 +348,13 @@ public class MediaController extends FrameLayout {
 public void setVoideType(){
   if(isFullScreen==true){
     setVideoType(DEFAULT_SCREEN);
+    if(mMediacontroller_video_siwch_screen!=null)
     mMediacontroller_video_siwch_screen.setBackgroundResource(R.drawable.btn_video_siwch_screen_full_selector);
 
     isFullScreen=false;
   }else{
     setVideoType(FULL_SCREEN);
+    if(mMediacontroller_video_siwch_screen!=null)
     mMediacontroller_video_siwch_screen.setBackgroundResource(R.drawable.btn_video_siwch_screen_default_selector);
     isFullScreen=true;
   }
@@ -347,6 +362,9 @@ public void setVoideType(){
 
 //改变音量
   public void changeVolume(int keyCode){
+    if(mMedia_pb_voice==null){
+      return;
+    }
     int mCurrentVolume=mMedia_pb_voice.getProgress();
     if(keyCode==KeyEvent.KEYCODE_VOLUME_DOWN){
       mCurrentVolume--;
@@ -376,7 +394,7 @@ public void setVoideType(){
 
 //隐藏播放模式
   public void hidePlayModeListView(){
-    if(mPlayModeListView.getVisibility()==VISIBLE)
+    if(mPlayModeListView!=null&&mPlayModeListView.getVisibility()==VISIBLE)
       mPlayModeListView.setVisibility(GONE);
   }
 
@@ -658,7 +676,9 @@ public void showNoAnimal(){
       initFloatingWindow();
   }
 
-  private boolean initController(Context context) {
+
+
+    private boolean initController(Context context) {
     mContext = context;
     mAM = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
     mScreenWidth=CommonUtils.getScreenWidth(this.getContext());
@@ -768,14 +788,6 @@ public void showNoAnimal(){
       mNextButton.setOnClickListener(mNextListener);
     }
 
-    mLoveButton = (ImageButton)v.findViewById(getResources().getIdentifier("mediacontroller_love","id",mContext.getPackageName()));
-    if(mLoveButton!=null){
-      //
-        setLove(mPlayer.isLove());
-
-      mLoveButton.requestFocus();
-      mLoveButton.setOnClickListener(mLoveListener);
-    }
 
     mDownloadButton = (ImageButton)v.findViewById(getResources().getIdentifier("mediacontroller_download","id",mContext.getPackageName()));
     if(mDownloadButton!=null){
@@ -783,13 +795,13 @@ public void showNoAnimal(){
       mDownloadButton.setOnClickListener(mDownloadListener);
     }
 
+
     mShareButton = (ImageButton)v.findViewById(getResources().getIdentifier("mediacontroller_share","id",mContext.getPackageName()));
 
     if(mShareButton!=null){
       mShareButton.requestFocus();
       mShareButton.setOnClickListener(mShareListener);
     }
-
     mPlayModeListView = (ListView)v.findViewById(getResources().getIdentifier("PlayModeListView","id",mContext.getPackageName()));
    if(mPlayModeListView!=null){
     final  PlayModeAdapter playModeAdapter=new PlayModeAdapter(data);
@@ -851,12 +863,20 @@ public void showNoAnimal(){
         }
       });
     }
+
+
     tipLinearLayout = (LinearLayout)v.findViewById(getResources().getIdentifier("TipLinearLayout","id",mContext.getPackageName()));
 
     mediacontroller_topLinerLayout = (LinearLayout)v.findViewById(getResources().getIdentifier("mediacontroller_topLinerLayout","id",mContext.getPackageName()));
 
     mediacontroller_relativeLayout = (RelativeLayout) v.findViewById(getResources().getIdentifier("mediacontroller_relativeLayout","id",mContext.getPackageName()));
+     mLoveButton=(ImageButton)v.findViewById(getResources().getIdentifier("mediacontroller_love","id",mContext.getPackageName()));
 
+    if(mLoveButton!=null){
+      setLove(mPlayer.isLove());
+      mLoveButton.requestFocus();
+      mLoveButton.setOnClickListener(mLoveListener);
+    }
 
   }
 
@@ -1118,10 +1138,9 @@ public void setProgressRightSlide(int position){
 }
 
   /**
-   * 隐藏下载和分享图标
+   * 设置下载和分享图标不可用
    */
   public void hideDownloadAndShareIcon(){
-    android.util.Log.i(TAG, "hideDownloadAndShareIcon: ");
    if(mDownloadButton!=null&&mShareButton!=null){
      if(mDownloadButton.getVisibility()==VISIBLE){
        mDownloadButton.setVisibility(GONE);
@@ -1129,21 +1148,35 @@ public void setProgressRightSlide(int position){
      if(mShareButton.getVisibility()==VISIBLE){
        mShareButton.setVisibility(GONE);
      }
+     mDownloadButton.setEnabled(false);
+     mShareButton.setEnabled(false);
    }
   }
   /**
-   * 显示下载和分享图标
+   *
+   * 设置下载图标不可用,分享图标可用
+   */
+
+  public void setDownloadNoAvailableShareIconEnable(){
+    if(mDownloadButton!=null&&mShareButton!=null){
+
+      mDownloadButton.setEnabled(false);
+      mShareButton.setEnabled(true);
+    }
+  }
+  /**
+   * 设置下载和分享图标可用
    */
   public void showDownloadAndShareIcon(){
-    android.util.Log.i(TAG, "showDownloadAndShareIcon: ");
     if(mDownloadButton!=null&&mShareButton!=null){
-      android.util.Log.i(TAG, "showDownloadAndShareIcon: ```");
-      if(mDownloadButton.getVisibility()==GONE){
-        mDownloadButton.setVisibility(VISIBLE);
-      }
-      if(mShareButton.getVisibility()==GONE){
-        mShareButton.setVisibility(VISIBLE);
-      }
+//      if(mDownloadButton.getVisibility()==GONE){
+//        mDownloadButton.setVisibility(VISIBLE);
+//      }
+//      if(mShareButton.getVisibility()==GONE){
+//        mShareButton.setVisibility(VISIBLE);
+//      }
+      mDownloadButton.setEnabled(true);
+      mShareButton.setEnabled(true);
     }
   }
 
@@ -1265,6 +1298,7 @@ public float getCurrentBrigtness(){
   private int isShowTipTye=-1;//正在显示的提示信息，0代表的是音量，1代表的是亮度，2代表的播放进度，-1代表没显示
   @Override
   public boolean onTouchEvent(MotionEvent ev) {
+
     final float mMaxVoice=mAM.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
     mGestureDetector.onTouchEvent(ev);
 
@@ -1290,6 +1324,7 @@ public float getCurrentBrigtness(){
 
          break;
         }
+
         if(isShowTipTye!=-1){
 
           switch (isShowTipTye){
@@ -1302,8 +1337,10 @@ public float getCurrentBrigtness(){
                 isShowTipTye=0;
                 if(isOnlyShowTipCon){//如果只有提示信息显示
                   hideAllControl();
+                  if(mPlayModeListView.getVisibility()==GONE)
                   showOneTipByIndex(isShowTipTye);
                 }else{
+                   if(mPlayModeListView.getVisibility()==GONE)
                   showOneTipByIndex(isShowTipTye);
                 }
               }
@@ -1314,6 +1351,7 @@ public float getCurrentBrigtness(){
                  changeAppBrightness(mBright);
                  setTipIconBrightnessProgress(mBright);
                  isShowTipTye=1;
+                 if(mPlayModeListView.getVisibility()==GONE)
                  showOneTipByIndex(isShowTipTye);
                }
               break;
@@ -1323,6 +1361,7 @@ public float getCurrentBrigtness(){
               setProgressRightSlide((int)mCurrentProgress);
               setTipPlayProgress(mCurrentProgress);
               isShowTipTye=2;
+              if(mPlayModeListView.getVisibility()==GONE)
               showOneTipByIndex(isShowTipTye);
               break;
           }
@@ -1335,6 +1374,7 @@ public float getCurrentBrigtness(){
               setProgressRightSlide((int)mCurrentProgress);
             setTipPlayProgress(mCurrentProgress);
             isShowTipTye=2;
+            if(mPlayModeListView.getVisibility()==GONE)
             showOneTipByIndex(isShowTipTye);
             break;
           }
@@ -1349,8 +1389,10 @@ public float getCurrentBrigtness(){
             isShowTipTye=0;
             if(isOnlyShowTipCon){//如果只有提示信息显示
               hideAllControl();
+              if(mPlayModeListView.getVisibility()==GONE)
               showOneTipByIndex(isShowTipTye);
             }else{
+              if(mPlayModeListView.getVisibility()==GONE)
               showOneTipByIndex(isShowTipTye);
             }
 
@@ -1364,6 +1406,7 @@ public float getCurrentBrigtness(){
             setTipIconBrightnessMax();
             setTipIconBrightnessProgress(mBright);
             isShowTipTye=1;
+            if(mPlayModeListView.getVisibility()==GONE)
             showOneTipByIndex(isShowTipTye);
           }
 
@@ -1384,7 +1427,6 @@ public float getCurrentBrigtness(){
         mHandler.sendEmptyMessageDelayed(HIDE_TIPICON,2000);//2000毫秒之后自动隐藏掉提示图标
         break;
     }
-
     return true;
   }
 
@@ -1440,6 +1482,7 @@ public float getCurrentBrigtness(){
     if (mPlayer.isPlaying())
     {
       mPlayer.pause();
+      if(mPlayModeListView.getVisibility()==GONE)
       showOneTipByIndex(3);
       mHandler.removeMessages(HIDE_TIPICON);
       mHandler.sendEmptyMessageDelayed(HIDE_TIPICON,2000);//2000毫秒之后自动隐藏掉提示图标
@@ -1447,10 +1490,11 @@ public float getCurrentBrigtness(){
     else
     {
       hideAllTip();
-      mPlayer.start();
+      mPlayer.continuePlay();
       mPlayer.setPlaybackSpeed(1.0f);
     }
     updatePausePlay();
+
   }
 
   private void doPrevResume(){
@@ -1495,9 +1539,12 @@ public float getCurrentBrigtness(){
   }
 
   public interface MediaPlayerControl {
+    void quit();
     void start();
 
     void pause();
+
+    void  continuePlay();
 
     void next();
 
@@ -1506,6 +1553,7 @@ public float getCurrentBrigtness(){
     void love();
 
     void download();
+
 
     void share();
     void setPlaybackSpeed(float speed);

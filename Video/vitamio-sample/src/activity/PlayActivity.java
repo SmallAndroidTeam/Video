@@ -1,7 +1,12 @@
 package activity;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -9,6 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,12 +24,15 @@ import io.vov.vitamio.MediaPlayer;
 import io.vov.vitamio.Vitamio;
 import io.vov.vitamio.bean.Video;
 import io.vov.vitamio.demo.R;
+import io.vov.vitamio.provider.VideoCollectOperation;
+import io.vov.vitamio.toast.oneToast;
 import io.vov.vitamio.widget.MediaController;
 import io.vov.vitamio.widget.VideoView;
+import localData.FileManger;
 import saveDate.SaveCollectFragment;
-import toast.oneToast;
+import utils.HttpUtil;
 
-public class PlayActivity extends Activity implements VideoView.VideoCollect, View.OnTouchListener {
+public class PlayActivity extends Activity implements VideoView.VideoCollect, View.OnTouchListener, HttpUtil.LocalPlay {
     private VideoView videoView;
     private String path="http://www.modrails.com/videos/passenger_nginx.mov";
     private ProgressBar progressBar;
@@ -31,9 +40,9 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
     private TextView loadRateView;
     private static List<Video> videoList=new ArrayList<>();//播放的视频列表
     private  int position=0;//要播放视频的下标
-    private final String TAG="movie";
+    private final String TAG="movie2";
     private RelativeLayout playRelativeLayout;
-
+    private static boolean isExists=false;//判断播放界面是否存在
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,6 +57,8 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
         }
         ininView();
         initVideo();
+        isExists=true;
+        Log.i("movie2", "onCreate: 创建playAcitvity播放界面");
 
     }
 
@@ -62,6 +73,10 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
           loadRateView = (TextView)this.findViewById(R.id.load_rate);
         playRelativeLayout = (RelativeLayout)this.findViewById(R.id.playRelativeLayout);
         playRelativeLayout.setOnTouchListener(this);
+
+        progressBar.setVisibility(View.VISIBLE);
+        downloadRateView.setText("拼命加载中....");
+        downloadRateView.setVisibility(View.VISIBLE);
     }
     private void initVideo() {
         // path= Environment.getExternalStorageDirectory().getPath()+"/Movies/"+"test.swf";
@@ -141,9 +156,11 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
                             downloadRateView.setText("");
                             downloadRateView.setVisibility(View.VISIBLE);
                             loadRateView.setVisibility(View.VISIBLE);
+                            videoView.hideMediaControlAllTip();//隐藏提示信息
                         break;
                     case MediaPlayer.MEDIA_INFO_DOWNLOAD_RATE_CHANGED:
                         downloadRateView.setText(" "+extra+"kb/s"+" ");
+                        videoView.hideMediaControlAllTip();
                         break;
                     case MediaPlayer.MEDIA_INFO_BUFFERING_END:
                         videoView.continuePlay();
@@ -162,6 +179,7 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
             @Override
             public void onBufferingUpdate(MediaPlayer mp, int percent) {
                 loadRateView.setText(percent+"%");
+                videoView.hideMediaControlAllTip();
             }
         });
     }
@@ -169,13 +187,138 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
     //如果是本地视频则删除缓冲
     @Override
     public void deleteOnInfoAndOnBufferingUpdate() {
+        progressBar.setVisibility(View.GONE);
+        downloadRateView.setVisibility(View.GONE);
+        loadRateView.setVisibility(View.GONE);
     videoView.setOnInfoListener(null);
     videoView.setOnBufferingUpdateListener(null);
     }
+
+    @Override
+    public void downloadVideo(int position) {
+        startDownLoadVideo(position);
+
+    }
+
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         videoView.onTouchEvent(event);
         return true;
     }
+
+    /**
+     * 请求用户给予悬浮窗的权限
+     */
+    public void askForPermission(int position){
+        if(!Settings.canDrawOverlays(this)){
+            oneToast.showMessage(this,"当前没有悬浮窗的权限，请授权");
+            Intent intent=new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:"+getPackageName()));
+            intent.putExtra("position",position);
+            startActivityForResult(intent,1);
+        }else{
+            startDownLoadVideo(position);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode==1){
+            if(!Settings.canDrawOverlays(this)){
+                oneToast.showMessage(this,"权限授予失败，无法开启悬浮窗");
+            }else{
+              int position=data.getIntExtra("position",0);
+                Log.i(TAG, "onActivityResult: "+position);
+                startDownLoadVideo(position);
+            }
+        }
+    }
+    @Override
+    public void ifDownloadLocalPlay(int position) {
+        VideoCollectOperation videoCollectOperation=new VideoCollectOperation(this);
+        String   videoSavePath= videoCollectOperation.getSavePathByDownloadPath(videoList.get(position).getVideoPath());
+        Log.i(TAG, "ifDownloadLocalPlay: 下载的视频地址为:"+videoList.get(position).getVideoPath()+"//保存的地址为:"+videoSavePath);
+        if(videoSavePath!=null&&new File(videoSavePath).exists()){//如果在线视频本地已下载,且存在
+            File videoSavePathFile=new File(videoSavePath);
+            // oneToast.showMessage(this,"此视频已下载");
+            Video video=new Video();
+            video.setVideoPath(videoSavePathFile.getAbsolutePath());
+            video.setVideoName(videoSavePathFile.getName());
+            video.setSize(FileManger.getSize(videoSavePathFile.getAbsolutePath()));
+            video.setDate(FileManger.getDate(videoSavePathFile.getAbsolutePath()));
+            video.setDuration(FileManger.getVideoDuration(videoSavePathFile.getAbsolutePath()));
+            video.setProgress(videoList.get(position).getProgress());
+            video.setThumbnail(FileManger.getVideoThumbnailThree(videoSavePathFile.getAbsolutePath(), MediaStore.Images.Thumbnails.MICRO_KIND));
+            video.setNetworkVideoAddress(videoList.get(position).getVideoPath());
+             videoView.localPlay(video,position);
+             oneToast.showMessage(this,"此视频已下载,正在本地播放");
+        }
+    }
+
+
+    public void startDownLoadVideo(int position){
+        if(HttpUtil.downloadingVideoPath.contains(videoList.get(position).getVideoPath())){
+            oneToast.showMessage(this,"此视频正在下载");
+            return;
+        }
+        VideoCollectOperation videoCollectOperation=new VideoCollectOperation(this);
+       String   videoSavePath= videoCollectOperation.getSavePathByDownloadPath(videoList.get(position).getVideoPath());
+        Log.i(TAG, "startDownLoadVideo: 下载的视频地址为:"+videoList.get(position).getVideoPath()+"//保存的地址为:"+videoSavePath);
+        if(videoSavePath!=null&&new File(videoSavePath).exists()){//如果在线视频本地已下载,且存在
+            File videoSavePathFile=new File(videoSavePath);
+           // oneToast.showMessage(this,"此视频已下载");
+            Video video=new Video();
+            video.setVideoPath(videoSavePathFile.getAbsolutePath());
+            video.setVideoName(videoSavePathFile.getName());
+            video.setSize(FileManger.getSize(videoSavePathFile.getAbsolutePath()));
+            video.setDate(FileManger.getDate(videoSavePathFile.getAbsolutePath()));
+            video.setDuration(FileManger.getVideoDuration(videoSavePathFile.getAbsolutePath()));
+            video.setThumbnail(FileManger.getVideoThumbnailThree(videoSavePathFile.getAbsolutePath(), MediaStore.Images.Thumbnails.MICRO_KIND));
+            video.setNetworkVideoAddress(videoList.get(position).getVideoPath());
+            videoView.downLoadLocalPlay(video,position);
+          oneToast.showMessage(this,"此视频已下载,正在本地播放");
+        }else{
+            oneToast.showMessage(this,"开始下载");
+
+            HttpUtil httpUtil=new HttpUtil(this,position);
+            httpUtil.setLocalPlay(this);
+            httpUtil.sendHttpRequest(videoList.get(position).getVideoPath(),videoList.get(position).getVideoName());
+        }
+    }
+    //下载完之后开始本地播放
+    public void startLocalPlay(int position){
+        if(!isExists){//如果不存在播放界面
+            return;
+        }
+        VideoCollectOperation videoCollectOperation=new VideoCollectOperation(this);
+        String   videoSavePath= videoCollectOperation.getSavePathByDownloadPath(videoList.get(position).getVideoPath());
+        Log.i(TAG, "下载完之后开始本地播放地址: "+videoSavePath);
+        if(videoSavePath!=null&&new File(videoSavePath).exists()){//如果在线视频本地已下载,且存在
+            File videoSavePathFile=new File(videoSavePath);
+            // oneToast.showMessage(this,"此视频已下载");
+            Video video=new Video();
+            video.setVideoPath(videoSavePathFile.getAbsolutePath());
+            video.setVideoName(videoSavePathFile.getName());
+            video.setSize(FileManger.getSize(videoSavePathFile.getAbsolutePath()));
+            video.setDate(FileManger.getDate(videoSavePathFile.getAbsolutePath()));
+            video.setDuration(FileManger.getVideoDuration(videoSavePathFile.getAbsolutePath()));
+            video.setThumbnail(FileManger.getVideoThumbnailThree(videoSavePathFile.getAbsolutePath(), MediaStore.Images.Thumbnails.MICRO_KIND));
+            video.setNetworkVideoAddress(videoList.get(position).getVideoPath());
+            videoView.downLoadLocalPlay(video,position);
+        }
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        isExists=false;
+        Log.i("movie2", "onCreate: 摧毁playAcitvity播放界面");
+    }
+
+    @Override
+    public void localPlay(int position) {
+        startLocalPlay(position);
+    }
 }
+

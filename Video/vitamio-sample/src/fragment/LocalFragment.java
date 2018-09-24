@@ -44,13 +44,13 @@ public class LocalFragment extends Fragment implements View.OnClickListener {
         FragmentPagerAdapter fragmentPagerAdapter=new fragmentAdapter(getFragmentManager(),fragmentList);
         viewPager.setOffscreenPageLimit(2);//ViewPager的缓存为帧
         viewPager.setAdapter(fragmentPagerAdapter);
-        viewPager.setCurrentItem(0);
+        viewPager.setCurrentItem(1);
         setListener();
        return  view;
     }
 
     private void initPosition() {
-        setOneTabPosition(0);
+        setOneTabPosition(1);
        //Log.i(TAG, "initPosition: --------------"+windowWidth+"//"+controlWidth);
     }
 

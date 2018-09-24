@@ -6,7 +6,7 @@
        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:textColor="@color/indexText"
+        android:textColor="@color/indexTextSelect"
         android:textSize="30dp"
         android:background="@color/indexBackground"
         android:textStyle="bold"

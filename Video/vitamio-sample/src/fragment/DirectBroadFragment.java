@@ -41,5 +41,6 @@ public class DirectBroadFragment extends Fragment {
 
     private void initView(View view) {
         directBroadImageButton = (ImageButton)view.findViewById(R.id.directBroad_play_stop);
+
     }
 }

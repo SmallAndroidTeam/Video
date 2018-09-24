@@ -4,5 +4,16 @@
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
     </style>
+    <!--选择按钮样式-->
+    <style name="radiobutton_style">
+         <item name="android:button">@android:color/transparent</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:padding">1dp</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@drawable/rb_video_textcolor_selector</item>
+    </style>
 
 </resources>

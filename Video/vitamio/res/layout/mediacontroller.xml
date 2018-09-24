@@ -73,7 +73,7 @@
     <RelativeLayout
         android:id="@+id/mediacontroller_relativeLayout"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
+        android:layout_height="85dp"
         android:orientation="horizontal"
         android:layout_alignParentBottom="true"
         android:background="@color/mediacontroller_bg"
@@ -90,7 +90,8 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/mediacontroller_seekbar">
+            android:layout_below="@+id/mediacontroller_seekbar"
+            android:layout_marginBottom="5dp">
             <ImageButton
                 android:id="@+id/mediacontroller_exit"
                 android:layout_width="60dp"
@@ -101,13 +102,16 @@
                 />
             <ImageButton
                 android:id="@+id/mediacontroller_prev"
-                android:layout_width="40dp"
-                android:layout_height="30dp"
+                android:padding="10dp"
+                android:layout_width="60dp"
+                android:layout_height="50dp"
+                android:scaleType="fitXY"
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/mediacontroller_exit"
                 android:layout_marginLeft="5dp"
+                android:background="@drawable/mediacontroller_button"
                 android:contentDescription="@string/mediacontroller_prev"
-                android:background="@drawable/mediacontrol_prev"/>
+                android:src="@drawable/mediacontrol_prev"/>
             <ImageButton
                 android:id="@+id/mediacontroller_play_pause"
                 android:layout_width="wrap_content"
@@ -120,13 +124,16 @@
                 android:src="@drawable/mediacontroller_pause" />
             <ImageButton
                 android:id="@+id/mediacontroller_next"
-                android:layout_width="40dp"
-                android:layout_height="30dp"
+                android:padding="10dp"
+                android:layout_width="60dp"
+                android:layout_height="50dp"
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="5dp"
+                android:scaleType="fitXY"
                 android:layout_toRightOf="@+id/mediacontroller_play_pause"
+                android:background="@drawable/mediacontroller_button"
                 android:contentDescription="@string/mediacontroller_next"
-                android:background="@drawable/mediacontrol_next"/>
+                android:src="@drawable/mediacontrol_next"/>
             <TextView
                 android:id="@+id/mediacontroller_time_current"
                 style="@style/MediaController_Text"
@@ -157,45 +164,55 @@
 
             <ImageButton
                 android:id="@+id/mediacontroller_love"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="10dp"
-                android:layout_toRightOf="@+id/mediacontroller_time_total"
+                android:layout_marginStart="10dp"
+                android:scaleType="fitXY"
+                android:layout_toEndOf="@+id/mediacontroller_time_total"
                 android:contentDescription="@string/mediacontroller_love"
-                android:background="@drawable/mediacontrol_love"
+                android:background="@drawable/mediacontroller_button"
+                android:src="@drawable/mediacontrol_love"
                 />
 
             <Button
                 android:id="@+id/DoubleSpeed"
                 style="@style/MediaController_Text"
+                android:padding="10dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/mediacontroller_love"
                 android:layout_marginLeft="10dp"
                 android:text="@string/DoubleSpeed"
-                android:background="@drawable/shape"
+               android:background="@drawable/mediacontroller_button"
                 />
+            <!--android:background="@drawable/shape"-->
             <ImageButton
                 android:id="@+id/mediacontroller_download"
-                android:layout_width="40dp"
-                android:layout_height="30dp"
+                android:padding="10dp"
+                android:layout_width="60dp"
+                android:layout_height="50dp"
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="10dp"
+                android:scaleType="fitXY"
                 android:contentDescription="@string/mediacontroller_download"
                 android:layout_toRightOf="@id/DoubleSpeed"
-                android:background="@drawable/mediacontroller_download"/>
+                android:background="@drawable/mediacontroller_button"
+                android:src="@drawable/mediacontrol_download"/>
 
             <ImageButton
                 android:id="@+id/mediacontroller_share"
-                android:layout_width="40dp"
-                android:layout_height="30dp"
+                android:padding="10dp"
+                android:layout_width="60dp"
+                android:layout_height="50dp"
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="10dp"
+                android:scaleType="fitXY"
                 android:contentDescription="@string/mediacontroller_share"
                 android:layout_toRightOf="@id/mediacontroller_download"
-                android:background="@drawable/mediacontroller_share"/>
+                android:background="@drawable/mediacontroller_button"
+                android:src="@drawable/mediacontroller_share"/>
 
             <ImageButton
                 android:id="@+id/mediacontroller_video_siwch_screen"
@@ -215,7 +232,6 @@
         android:layout_width="120dp"
         android:layout_centerInParent="true"
         android:layout_height="wrap_content"
-
         android:background="@color/mediacontroller_bg"
         tools:ignore="NotSibling">
     </ListView>

@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.TextView;
 
 
@@ -20,27 +21,13 @@ import io.vov.vitamio.demo.R;
 import saveDate.SaveCollectFragment;
 
 public class MainActivity extends FragmentActivity implements View.OnClickListener {
-
-
-    private LinearLayout localLayout;
-    private ImageView localImageView;
-    private TextView localTextView;
-    private LinearLayout onlineLayout;
-    private ImageView onlineImageView;
-    private TextView onlineTextView;
-    private LinearLayout collectLayout;
-    private ImageView collectImageView;
-    private TextView collectTextView;
-    private LinearLayout personalCentreLayout;
-    private ImageView personalCentreImageView;
-    private TextView personalCentreTextView;
     private Fragment localFragment,onlineFragment,collectFragment,personalCentreFragment,directBroadFragment;
-    private FrameLayout mainFragment;
-    private LinearLayout mainLinearLayout;
     public static final String TAG="movie";
-    private LinearLayout meettingLayout;
-    private ImageView meettingImageView;
-    private TextView meettingTextView;
+    private RadioButton rb_localvideo;
+    private RadioButton rb_netvideo;
+    private RadioButton rb_netdirectbroad;
+    private RadioButton rb_collectvideo;
+    private RadioButton rb_personalcentre;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,76 +41,43 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         ininView();
 
         initClickListener();
+        rb_localvideo.setChecked(true);
         seletTab(0);
     }
 
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if(hasFocus){
-           // initPosition();//初始化位置等属性
-        }
-
-    }
-
     private void initClickListener() {
-        localLayout.setOnClickListener(this);
-        onlineLayout.setOnClickListener(this);
-        meettingLayout.setOnClickListener(this);
-        collectLayout.setOnClickListener(this);
-        personalCentreLayout.setOnClickListener(this);
+        rb_localvideo.setOnClickListener(this);
+        rb_netvideo.setOnClickListener(this);
+        rb_netdirectbroad.setOnClickListener(this);
+        rb_collectvideo.setOnClickListener(this);
+        rb_personalcentre.setOnClickListener(this);
+
     }
 
     private void ininView() {
-        mainFragment = (FrameLayout)this.findViewById(R.id.mainFragment);
-        mainLinearLayout = (LinearLayout)this.findViewById(R.id.mainLinearLayout);
-
-        localLayout = (LinearLayout)this.findViewById(R.id.localLayout);
-        localImageView = (ImageView)this.findViewById(R.id.localImageView);
-        localTextView = (TextView)this.findViewById(R.id.localTextView);
-
-        onlineLayout = (LinearLayout)this.findViewById(R.id.onlineLayout);
-        onlineImageView = (ImageView)this.findViewById(R.id.onlineImageView);
-        onlineTextView = (TextView)this.findViewById(R.id.onlineTextView);
-
-        meettingLayout = (LinearLayout)this.findViewById(R.id.meettingLayout);
-        meettingImageView = (ImageView)this.findViewById(R.id.meettingImageView);
-        meettingTextView = (TextView)this.findViewById(R.id.meettingTextView);
-
-        collectLayout = (LinearLayout)this.findViewById(R.id.collectLayout);
-        collectImageView = (ImageView)this.findViewById(R.id.collectImageView);
-        collectTextView = (TextView)this.findViewById(R.id.collectTextView);
-
-
-        personalCentreLayout = (LinearLayout)this.findViewById(R.id.PersonalCentreLayout);
-        personalCentreImageView = (ImageView)this.findViewById(R.id.PersonalCentreImageView);
-        personalCentreTextView = (TextView)this.findViewById(R.id.PersonalCentreTextView);
+        rb_localvideo = (RadioButton)this.findViewById(R.id.rb_localvideo);
+        rb_netvideo = (RadioButton)this.findViewById(R.id.rb_netvideo);
+        rb_netdirectbroad = (RadioButton)this.findViewById(R.id.rb_netdirectbroad);
+        rb_collectvideo = (RadioButton)this.findViewById(R.id.rb_collectvideo);
+        rb_personalcentre = (RadioButton)this.findViewById(R.id.rb_personalcentre);
     }
-//    private void initPosition() {
-//    int windowHeight= Property.getWindowHeight(this);
-//    int mainLinearLayoutHeight=Property.getLinearLayoutHeight(mainLinearLayout);
-//    //设置mainFragment的高度
-//        //Log.i(TAG, "initPosition: -----------"+windowHeight+"/"+mainLinearLayoutHeight);
-//        ViewGroup.LayoutParams layoutParams=(ViewGroup.LayoutParams)mainFragment.getLayoutParams();
-//        layoutParams.height=windowHeight-mainLinearLayoutHeight;
-//    }
 
     @Override
     public void onClick(View view) {
        switch (view.getId()){
-           case R.id.localLayout:
+           case R.id.rb_localvideo:
                seletTab(0);
                break;
-           case R.id.onlineLayout:
+           case R.id.rb_netvideo:
                seletTab(1);
                break;
-           case R.id.meettingLayout:
+           case R.id.rb_netdirectbroad:
                seletTab(2);
                break;
-           case R.id.collectLayout:
+           case R.id.rb_collectvideo:
                seletTab(3);
                break;
-           case R.id.PersonalCentreLayout:
+           case R.id.rb_personalcentre:
                seletTab(4);
                break;
                default:

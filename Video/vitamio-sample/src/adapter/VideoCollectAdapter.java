@@ -91,8 +91,11 @@ public class VideoCollectAdapter extends BaseAdapter {
             viewHolder.videoSize.setText(String.format("%.2fM",1.0*videoList.get(i).getSize()/1024/1024));
         }
         viewHolder.videoName.setText(videoList.get(i).getVideoName());
-
-        viewHolder.videoDuration.setText(StringUtils.generateTime(videoList.get(i).getDuration()));
+        if(videoList.get(i).getDuration()==0){
+            viewHolder.videoDuration.setVisibility(View.INVISIBLE);
+        }else{
+            viewHolder.videoDuration.setText(StringUtils.generateTime(videoList.get(i).getDuration()));
+        }
         viewHolder.videoModifiedDate.setText(bean.Video.ConvertDate(videoList.get(i).getDate()));
 
         return view;

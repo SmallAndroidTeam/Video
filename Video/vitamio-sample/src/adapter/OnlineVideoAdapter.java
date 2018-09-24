@@ -22,9 +22,28 @@ import io.vov.vitamio.demo.R;
 public class OnlineVideoAdapter extends BaseAdapter {
     private List<NetMediaItem.TrailersBean> mTrailersBean;
     private Context mContext;
+    private int current_type=0;//当前的类型
+    private static final int  TYPE_ITEN=0;//普通的item view
+    private static final int TYPE_FOOTER=1;//底部FootView;
 
     public OnlineVideoAdapter(List<NetMediaItem.TrailersBean> mTrailersBean, Context mContext) {
         this.mTrailersBean = mTrailersBean;
+        this.mContext = mContext;
+    }
+
+    public List<NetMediaItem.TrailersBean> getmTrailersBean() {
+        return mTrailersBean;
+    }
+
+    public void setmTrailersBean(List<NetMediaItem.TrailersBean> mTrailersBean) {
+        this.mTrailersBean = mTrailersBean;
+    }
+
+    public Context getmContext() {
+        return mContext;
+    }
+
+    public void setmContext(Context mContext) {
         this.mContext = mContext;
     }
 
@@ -42,6 +61,19 @@ public class OnlineVideoAdapter extends BaseAdapter {
     public long getItemId(int position) {
         return position;
     }
+
+    //获取当前的子项的类型
+//    @Override
+//    public int getItemViewType(int position) {
+//
+//        if(position+1==getCount()){
+//            current_type=TYPE_FOOTER;
+//        }else
+//        {
+//            current_type=TYPE_ITEN;
+//        }
+//        return  current_type;
+//    }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {

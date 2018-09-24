@@ -10,8 +10,8 @@ import android.widget.TextView;
 import io.vov.vitamio.MediaPlayer;
 import io.vov.vitamio.Vitamio;
 import io.vov.vitamio.demo.R;
+import io.vov.vitamio.toast.oneToast;
 import io.vov.vitamio.widget.VideoView;
-import toast.oneToast;
 
 /**
  * 直播节目
@@ -32,7 +32,7 @@ public class DirectBroadActivity extends Activity implements VideoView.VideoColl
    //http://live.hkstv.hk.lxdns.com/live/hks/playlist.m3u8
     //http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8
     //rtsp://184.72.239.149/vod/mp4://BigBuckBunny_175k.mov
-    private final  static String meettingPath="http://live.hkstv.hk.lxdns.com/live/hks/playlist.m3u8";
+    private final  static String meettingPath="http://221.228.226.23/11/t/j/v/b/tjvbwspwhqdmgouolposcsfafpedmb/sh.yinyuetai.com/691201536EE4912BF7E4F1E2C67B8119.mp4";
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,6 +47,8 @@ public class DirectBroadActivity extends Activity implements VideoView.VideoColl
         progressBar = (ProgressBar)this.findViewById(R.id.probar);
         downloadRateView = (TextView)this.findViewById(R.id.download_rate);
         loadRateView = (TextView)this.findViewById(R.id.load_rate);
+        progressBar.setVisibility(View.VISIBLE);
+        downloadRateView.setText("拼命加载中...");
     }
 
     @Override
@@ -59,15 +61,13 @@ public class DirectBroadActivity extends Activity implements VideoView.VideoColl
         meettingVideoView.setVideoCollect(this);//为了更新收藏视图
        meettingVideoView.setVideoPath(meettingPath);
     meettingVideoView.requestFocus();
-   // meettingVideoView.setMediaController(new MediaController(this));
+     // meettingVideoView.setMediaController(new MediaController(this));
     meettingVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(MediaPlayer mp) {
             mp.setPlaybackSpeed(1.0f);
         }
     });
-
-
         //注册一个回调函数，在异步操作调用过程中发生错误时调用。例如视频打开失败。
         meettingVideoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
             @Override
@@ -103,9 +103,11 @@ public class DirectBroadActivity extends Activity implements VideoView.VideoColl
                             downloadRateView.setText("");
                             downloadRateView.setVisibility(View.VISIBLE);
                             loadRateView.setVisibility(View.VISIBLE);
+                        meettingVideoView.hideMediaControlAllTip();
                         break;
                     case MediaPlayer.MEDIA_INFO_DOWNLOAD_RATE_CHANGED:
                         downloadRateView.setText(" "+extra+"kb/s"+" ");
+                        meettingVideoView.hideMediaControlAllTip();
                         break;
                     case MediaPlayer.MEDIA_INFO_BUFFERING_END:
                         meettingVideoView.continuePlay();
@@ -124,6 +126,7 @@ public class DirectBroadActivity extends Activity implements VideoView.VideoColl
             @Override
             public void onBufferingUpdate(MediaPlayer mp, int percent) {
                 loadRateView.setText(percent+"%");
+                meettingVideoView.hideMediaControlAllTip();
             }
         });
     }
@@ -133,6 +136,17 @@ public class DirectBroadActivity extends Activity implements VideoView.VideoColl
         meettingVideoView.setOnInfoListener(null);
         meettingVideoView.setOnBufferingUpdateListener(null);
     }
+
+    @Override
+    public void downloadVideo(int position) {
+
+    }
+
+    @Override
+    public void ifDownloadLocalPlay(int position) {
+
+    }
+
 
 
 }

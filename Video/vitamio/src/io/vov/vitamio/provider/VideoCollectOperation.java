@@ -6,14 +6,17 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.vov.vitamio.R;
 import io.vov.vitamio.bean.Video;
 import io.vov.vitamio.utils.CommonUtils;
+import io.vov.vitamio.utils.Crypto;
 
 /**
  * 视频收藏操作（数据库操作）
@@ -21,14 +24,90 @@ import io.vov.vitamio.utils.CommonUtils;
  */
 public class VideoCollectOperation {
     private Context context;
-    private final String dbName="VidelCollect.db";//数据库的名称
-    private final  String tableName="VideoCollect";
+    private final static  String dbName="VidelCollect.db";//数据库的名称
+    private final  static String tableName="VideoCollect";
+    private final static  String videoDownTableName="VideoDownload";
     private VideoCollectDatabaseHelper videoCollectDatabaseHelper;
-
+   private final static String TAG="movie4";
     public VideoCollectOperation(Context context) {
         this.context = context;
         this.videoCollectDatabaseHelper=new VideoCollectDatabaseHelper(context,dbName,null,1);
     }
+
+    //存储下载的视频和保存的视频地址信息到数据库
+    public synchronized boolean saveVideoDownload(String downloadVideoPath,String saveVideoPath){
+        SQLiteDatabase sqLiteDatabase=videoCollectDatabaseHelper.getWritableDatabase();
+        sqLiteDatabase.beginTransaction();
+         try{
+             if(isExistsVideoSave(saveVideoPath))
+             {
+                 sqLiteDatabase.execSQL("update "+videoDownTableName+" set VIDEO_DOWNLOAD_PATH=? where VIDEO_SAVE_PATH=?",new String[]{downloadVideoPath,saveVideoPath});
+             }else{
+                 sqLiteDatabase.execSQL("insert into "+videoDownTableName+"(VIDEO_SAVE_PATH,VIDEO_DOWNLOAD_PATH) values (?,?)",new String[]{saveVideoPath,downloadVideoPath});
+             }
+              sqLiteDatabase.setTransactionSuccessful();
+         }catch (Exception e){
+             e.printStackTrace();
+             return false;
+         }finally {
+                 sqLiteDatabase.endTransaction();
+                 sqLiteDatabase.close();
+         }
+         return true;
+    }
+
+    //删除存储的地址
+    public synchronized  void deleteSaveVideo(String saveVideoPath){
+        SQLiteDatabase sqLiteDatabase=videoCollectDatabaseHelper.getWritableDatabase();
+        sqLiteDatabase.beginTransaction();
+        try{
+            sqLiteDatabase.execSQL("delete from "+videoDownTableName+" where VIDEO_SAVE_PATH=?",new String[]{saveVideoPath});
+          sqLiteDatabase.setTransactionSuccessful();
+        }catch (Exception e){
+          e.printStackTrace();
+        }finally {
+          sqLiteDatabase.endTransaction();
+          sqLiteDatabase.close();
+        }
+    }
+
+    //判断存储的地址是否已存在下载表中
+    public synchronized  boolean isExistsVideoSave(String saveVideoPath){
+        SQLiteDatabase sqLiteDatabase=videoCollectDatabaseHelper.getWritableDatabase();
+        Cursor cursor=sqLiteDatabase.rawQuery("select * from "+videoDownTableName+" where VIDEO_SAVE_PATH=?",new String[]{saveVideoPath});
+        if(cursor.moveToFirst()){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    //判断下载的地址是否已存在下载表中
+    public synchronized boolean isExistsVideoDownload(String downloadVideoPath){
+        SQLiteDatabase sqLiteDatabase=videoCollectDatabaseHelper.getWritableDatabase();
+        Cursor cursor=sqLiteDatabase.rawQuery("select * from "+videoDownTableName+" where VIDEO_DOWNLOAD_PATH=?",new String[]{downloadVideoPath});
+        if(cursor.moveToFirst()){
+            return true;
+        }else{
+            return false;
+        }
+
+    }
+
+    //通过下载地址获取保存的地址的绝对路径
+    public synchronized String getSavePathByDownloadPath(String downloadVideoPath){
+        SQLiteDatabase sqLiteDatabase=videoCollectDatabaseHelper.getWritableDatabase();
+        Cursor cursor=sqLiteDatabase.rawQuery("select VIDEO_SAVE_PATH from "+videoDownTableName+" where VIDEO_DOWNLOAD_PATH=?",new String[]{downloadVideoPath});
+        if(cursor.moveToFirst()){
+           // Log.i("movie2", "getSavePathByDownloadPath: "+"存在");
+            return cursor.getString(cursor.getColumnIndex("VIDEO_SAVE_PATH"));
+        }else{
+            return null;
+        }
+    }
+
+
+
 
     //存储收藏的视频信息到数据库
     public synchronized  boolean saveVideoCollect(Video video){
@@ -81,6 +160,7 @@ public class VideoCollectOperation {
                  long duration= (long) cursor.getFloat(cursor.getColumnIndex("VIDEO_DURATION"));//时长
                  Bitmap Thumbnail=bytesToBitmap(cursor.getBlob(cursor.getColumnIndex("VIDEO_THUMBNAIL")));//缩略图
                  Integer progress=cursor.getInt(cursor.getColumnIndex("VIDEO_PROGRESS"));//播放进度(最大值为1000）
+                //android.util.Log.i("movie2", "love:11 "+progress);
                 Video video=new Video(videoPath,videoName,resolution,size,date,duration,Thumbnail,progress);
                 videoList.add(video);
             }while (cursor.moveToNext());
@@ -90,6 +170,7 @@ public class VideoCollectOperation {
 
    //判断视频是否已经收藏通过路径
    public synchronized boolean isExistsByPath(String path){
+
         final  SQLiteDatabase sqLiteDatabase=videoCollectDatabaseHelper.getWritableDatabase();
                  Cursor cursor=sqLiteDatabase.rawQuery("select * from "+tableName+" where VIDEO_PATH=?",new String[]{path});
                  if(cursor.moveToFirst()){
