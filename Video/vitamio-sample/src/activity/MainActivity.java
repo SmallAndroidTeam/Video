@@ -1,4 +1,5 @@
 package activity;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -12,15 +13,17 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 
 
+import broadcast.NetWorkChangeReceiver;
 import fragment.CollectFragment;
 import fragment.LocalFragment;
 import fragment.DirectBroadFragment;
 import fragment.OnlineFragment;
 import fragment.PersonalCentreFragment;
 import io.vov.vitamio.demo.R;
+import io.vov.vitamio.toast.oneToast;
 import saveDate.SaveCollectFragment;
 
-public class MainActivity extends FragmentActivity implements View.OnClickListener {
+public class MainActivity extends FragmentActivity implements View.OnClickListener{
     private Fragment localFragment,onlineFragment,collectFragment,personalCentreFragment,directBroadFragment;
     public static final String TAG="movie";
     private RadioButton rb_localvideo;
@@ -28,7 +31,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private RadioButton rb_netdirectbroad;
     private RadioButton rb_collectvideo;
     private RadioButton rb_personalcentre;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,7 +44,15 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
         initClickListener();
         rb_localvideo.setChecked(true);
+
         seletTab(0);
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
     }
 
     private void initClickListener() {
@@ -156,4 +166,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         {fragmentTransaction.hide(personalCentreFragment);
         }
     }
+
+
 }

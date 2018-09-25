@@ -23,7 +23,7 @@ public class DirectBroadFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view=inflater.inflate(R.layout.directbroad_fragment,null);
+        View view=inflater.inflate(R.layout.directbroad_fragment,container,false);
         initView(view);
         setClickListener();
         return view;

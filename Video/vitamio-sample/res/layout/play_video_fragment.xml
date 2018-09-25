@@ -45,4 +45,40 @@
             android:textColor="@color/download_rate"
             android:text=""/>
     </LinearLayout>
+      <RelativeLayout
+          android:id="@+id/net_unavailable_layout"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:visibility="gone">
+          <ImageView
+              android:id="@+id/net_unavailable_back"
+              android:layout_marginTop="30dp"
+              android:layout_width="60dp"
+              android:layout_height="40dp"
+              android:src="@drawable/net_unavaiable_back_button"/>
+          <LinearLayout
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:gravity="center"
+              >
+              <TextView
+                  android:id="@+id/net_unavailable_tipText"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="@string/playview_net_unavailable_tiptext"
+                  />
+              <Button
+                  android:id="@+id/net_unavailable_button"
+                  android:layout_marginTop="5dp"
+                  android:background="@drawable/shape"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textColor="#ffff"
+                  android:paddingLeft="15dp"
+                  android:paddingRight="15dp"
+                  android:text="@string/playview_net_unavailable_button"/>
+          </LinearLayout>
+      </RelativeLayout>
+
 </RelativeLayout>

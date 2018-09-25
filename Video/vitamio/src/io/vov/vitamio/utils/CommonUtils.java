@@ -2,10 +2,14 @@ package io.vov.vitamio.utils;
 
 import android.app.Activity;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.DisplayMetrics;
+import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * Created by MR.XIE on 2018/9/13.
@@ -33,7 +37,7 @@ public class CommonUtils {
         return  displayMetrics.heightPixels;
     }
     /**
-     * 判断是不是网路地址
+     * 判断是不是网络地址
      * @return
      */
     public static boolean isNetUrl(String url) {
@@ -46,5 +50,14 @@ public class CommonUtils {
         }
         return reault;
     }
-
+    //判断当前的网络是否可用
+    public  static boolean net_avaiable(Context context){
+        ConnectivityManager connectivityManager= (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo= Objects.requireNonNull(connectivityManager).getActiveNetworkInfo();
+        if(networkInfo!=null&&networkInfo.isAvailable()){//当前网络可用
+            return true;
+        }else{
+            return false;
+        }
+    }
 }

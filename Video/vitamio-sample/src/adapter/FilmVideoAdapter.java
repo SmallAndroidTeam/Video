@@ -19,14 +19,14 @@ import io.vov.vitamio.demo.R;
 /**
  * Created by MR.XIE on 2018/9/19.
  */
-public class OnlineVideoAdapter extends BaseAdapter {
+public class FilmVideoAdapter extends BaseAdapter {
     private List<NetMediaItem.TrailersBean> mTrailersBean;
     private Context mContext;
     private int current_type=0;//当前的类型
     private static final int  TYPE_ITEN=0;//普通的item view
     private static final int TYPE_FOOTER=1;//底部FootView;
 
-    public OnlineVideoAdapter(List<NetMediaItem.TrailersBean> mTrailersBean, Context mContext) {
+    public FilmVideoAdapter(List<NetMediaItem.TrailersBean> mTrailersBean, Context mContext) {
         this.mTrailersBean = mTrailersBean;
         this.mContext = mContext;
     }
@@ -79,7 +79,7 @@ public class OnlineVideoAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         final ViewHolder viewHolder;
         if(convertView==null){
-            convertView= LayoutInflater.from(parent.getContext()).inflate(R.layout.online_video_item,null);
+            convertView= LayoutInflater.from(parent.getContext()).inflate(R.layout.film_fragment_item,null);
             ImageView item_net_video_img=(ImageView)convertView.findViewById(R.id.item_net_video_img);
             TextView item_net_video_tv_title=(TextView)convertView.findViewById(R.id.item_net_video_tv_title);
             TextView item_net_video_tv_desc=(TextView)convertView.findViewById(R.id.item_net_video_tv_desc);

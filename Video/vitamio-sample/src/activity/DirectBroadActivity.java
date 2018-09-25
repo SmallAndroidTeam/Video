@@ -143,10 +143,13 @@ public class DirectBroadActivity extends Activity implements VideoView.VideoColl
     }
 
     @Override
-    public void ifDownloadLocalPlay(int position) {
-
+    public boolean ifDownloadLocalPlay(int position) {
+      return  false;
     }
 
-
+    @Override
+    public boolean isTouchUse() {
+        return false;
+    }
 
 }

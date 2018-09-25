@@ -263,6 +263,7 @@
             android:layout_width="70dp"
             android:layout_height="2dp"
             android:visibility="gone"
+            android:layout_marginTop="5dp"
             android:max="1000"/>
         <TextView
             android:id="@+id/TipPlayProgress"

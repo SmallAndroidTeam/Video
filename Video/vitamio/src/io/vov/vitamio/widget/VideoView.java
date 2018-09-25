@@ -111,6 +111,7 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
 
       // Get the capabilities of the player for this stream
       //TODO mCanPause
+
      if(videoList.size()>0){
        if(!CommonUtils.isNetUrl(videoList.get(position).getVideoPath())) {
          if(videoList.get(position).getNetworkVideoAddress()==null) {//如果不是网络地址
@@ -126,15 +127,19 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
            if(videoCollect!=null)
              videoCollect.deleteOnInfoAndOnBufferingUpdate();//删除缓冲
          }
-
+          setBufferSize(0);
        }else{
+           setBufferSize(100);
          if(mMediaController!=null) {
            mMediaController.showDownloadAndShareIcon();
          }
          if(videoCollect!=null){
            videoCollect.addOnInfoAndOnBufferingUpdate();//添加缓冲
-           videoCollect.ifDownloadLocalPlay(position);
+           if(!videoCollect.ifDownloadLocalPlay(position)){//此时网络不可用并且此视频为在线视频
+             return;
+           }
          }
+
        }
          mMediaPlayer.seekTo((long) (1.0*videoList.get(position).getProgress()*videoList.get(position).getDuration()/1000));
          if(mMediaController!=null){
@@ -460,6 +465,7 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
     }catch (Exception e){
       e.printStackTrace();
     }
+    
   }
 
   public void stopPlayback() {
@@ -669,6 +675,10 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
     if(mMediaController==null){//如果没有显示控制按钮则没滑动没反应
       return true;
     }
+      if(videoCollect!=null&&!videoCollect.isTouchUse()){
+       mMediaController.hide();
+       return true;
+      }
     final int  mScreenWidth= CommonUtils.getScreenWidth(getContext());
     final int mScreentHeight=CommonUtils.getScreenHeight(getContext());
     final AudioManager audioManager= (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
@@ -845,6 +855,7 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
         return true;
       } else if(keyCode==KeyEvent.KEYCODE_VOLUME_DOWN||keyCode==KeyEvent.KEYCODE_VOLUME_UP){
         if(mMediaController!=null) {
+
           mMediaController.changeVolume(keyCode);
         }
 
@@ -907,7 +918,6 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
       }
           if(videoList.size()>0)
       setVideoURI(Uri.parse(videoList.get(position).getVideoPath()));
-
   }
 
 
@@ -947,7 +957,6 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
   }
 
   public void start() {
-
     if (isInPlaybackState()) {
       while(videoList.size()>0)
       {
@@ -965,14 +974,19 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
               }
               continue;
             }else{
-              if(mMediaController!=null){
+                setBufferSize(0);
+
+                if(mMediaController!=null){
                 mMediaController.hideDownloadAndShareIcon();//设置下载和分享图标不可用
               }
               if(videoCollect!=null)
                 videoCollect.deleteOnInfoAndOnBufferingUpdate();//删除缓冲
               break;
             }
-          }else {//是在线视频不过已下载
+          }else {
+              setBufferSize(0);
+
+              //是在线视频不过已下载
             if(mMediaController!=null){
               mMediaController.setDownloadNoAvailableShareIconEnable();// 设置下载图标不可用,分享图标可用
             }
@@ -982,13 +996,17 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
           }
 
         }else{
-          if(mMediaController!=null){
+            setBufferSize(100);
+
+            if(mMediaController!=null){
             mMediaController.showDownloadAndShareIcon();//设置下载和分享图标可用
           }
           if(videoCollect!=null)
           videoCollect.addOnInfoAndOnBufferingUpdate();//添加缓冲
           if(videoCollect!=null){
-            videoCollect.ifDownloadLocalPlay(position);
+            if(!videoCollect.ifDownloadLocalPlay(position)){//此时网络不可用并且此视频为在线视频
+              return;
+            }
           }
           break;
         }
@@ -1005,6 +1023,11 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
       mCurrentState = STATE_PLAYING;
     }
     mTargetState = STATE_PLAYING;
+  }
+
+  //重新设置播放路径
+  public void resetSetVideoUri(){
+    setVideoURI(Uri.parse(videoList.get(position).getVideoPath()));
   }
 
   //隐藏下载和分享图标，删除缓冲(播放在线视频的时候判断是否下载，如果下载则本地播放）
@@ -1047,9 +1070,11 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
         mCurrentState = STATE_PLAYING;
     }
     mTargetState = STATE_PLAYING;
+
   }
   public void pause() {
     if (isInPlaybackState()) {
+
       if (mMediaPlayer.isPlaying()) {
         videoList.get(position).setProgress((int) (1000.0*mMediaPlayer.getCurrentPosition()/mMediaPlayer.getDuration()));
         mMediaPlayer.pause();
@@ -1177,6 +1202,7 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
 
   @Override
   public void love() {
+
    // android.util.Log.i("movie", "----------------------------love ");
     String videoPath=null;
     if(videoList.get(position).getNetworkVideoAddress()==null){
@@ -1231,9 +1257,22 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
   @Override
   public void share() {
     android.util.Log.i("movie", "----------------------------share");
+    if(CommonUtils.net_avaiable(mContext))
     oneToast.showMessage(getContext(),"分享");
+    else{
+      oneToast.showMessage(getContext(),"当前网络不可用");
+    }
   }
 
+  //判断当前的播放的视频是在线视频且没有本地下载
+  public boolean currentVideoIsOnLineVideoAndNetUnavaiable(){
+    Video video=videoList.get(position);
+    if(video.getNetworkVideoAddress()==null&&CommonUtils.isNetUrl(video.getVideoPath())){
+      return true;
+    }else{
+      return false;
+    }
+  }
   @Override
   public void setPlaybackSpeed(float speed) {
     mMediaPlayer.setPlaybackSpeed(speed);
@@ -1243,6 +1282,12 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
   public void hideMediaControlAllTip(){
     if(mMediaController!=null){
       mMediaController.hideAllTip();
+    }
+  }
+  //隐藏控制按钮
+  public void hideMediaControl(){
+    if(mMediaController!=null){
+      mMediaController.hide();
     }
   }
   public void suspend() {
@@ -1298,7 +1343,6 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
     }else{
       isLove=videoCollectOperation.isExistsByPath(videoList.get(position).getNetworkVideoAddress());//从数据中获取
     }
-
     return isLove;
   }
 
@@ -1306,6 +1350,12 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
     if (mMediaPlayer != null)
       return mCurrentBufferPercentage;
     return 0;
+  }
+
+  @Override
+  public boolean IsOnLineVideoAndNetUnavaiable() {
+
+    return currentVideoIsOnLineVideoAndNetUnavaiable();
   }
 
   public void setVolume(float leftVolume, float rightVolume) {
@@ -1439,12 +1489,15 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
   protected boolean isInPlaybackState() {
     return (mMediaPlayer != null && mCurrentState != STATE_ERROR && mCurrentState != STATE_IDLE && mCurrentState != STATE_PREPARING);
   }
+
+
   public interface  VideoCollect{
     void updateView();//添加或收藏更新视图
     void deleteOneVideoUpateView(int position,String path);//删除一个视频更新视图
     void addOnInfoAndOnBufferingUpdate();//如果是网络视频则添加缓冲
     void deleteOnInfoAndOnBufferingUpdate();//如果是本地视频则删除缓冲
     void downloadVideo(int position);//下载视频
-    void ifDownloadLocalPlay(int position);//如果下载了就本地播放
+    boolean ifDownloadLocalPlay(int position);//如果下载了就本地播放
+    boolean isTouchUse();//判断滑动是否可用
   }
 }

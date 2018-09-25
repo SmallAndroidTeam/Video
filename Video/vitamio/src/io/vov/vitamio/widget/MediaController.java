@@ -382,8 +382,18 @@ public void setVoideType(){
     setTipIconVocieMax();
     setTipIconVocieProgress(mCurrentVolume);
     showOneTipByIndex(0);
+
     mHandler.removeMessages(HIDE_TIPICON);
-    mHandler.sendEmptyMessageDelayed(HIDE_TIPICON,2000);
+
+    android.util.Log.i("movie2", "changeVolume: "+mPlayer.IsOnLineVideoAndNetUnavaiable());
+      if(mPlayer.IsOnLineVideoAndNetUnavaiable()){
+        hideAllTip();
+        hide();
+      }else{
+        mHandler.sendEmptyMessageDelayed(HIDE_TIPICON,2000);
+      }
+
+
 
   }
   public void changeVolumeByVoiceValue(int Voice){
@@ -1575,6 +1585,8 @@ public float getCurrentBrigtness(){
     boolean isLove();
 
     int getBufferPercentage();
+
+    boolean IsOnLineVideoAndNetUnavaiable();
   }
 
 }
