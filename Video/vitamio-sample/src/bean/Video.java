@@ -21,6 +21,7 @@ public class Video {
     private long size=0;//大小
     private long date=0;//添加时间
     private long duration=0;//时长
+    private String thumbnailPath=null;//缩略图的网络地址
     private Bitmap Thumbnail=null;//缩略图
     private Integer progress=0;//播放进度(最大值为1000）
     private String networkVideoAddress=null;//如果是本地视频则为空
@@ -44,6 +45,14 @@ public class Video {
         this.size = size;
         this.date = date;
         this.duration = duration;
+    }
+
+    public String getThumbnailPath() {
+        return thumbnailPath;
+    }
+
+    public void setThumbnailPath(String thumbnailPath) {
+        this.thumbnailPath = thumbnailPath;
     }
 
     public String getNetworkVideoAddress() {

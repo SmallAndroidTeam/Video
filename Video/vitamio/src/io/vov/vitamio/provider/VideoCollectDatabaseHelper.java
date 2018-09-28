@@ -19,7 +19,7 @@ public class VideoCollectDatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
      sqLiteDatabase.execSQL("create table if not exists VideoCollect(VIDEO_PATH  text primary key not null," +
-             "VIDEO_NAME text not null,VIDEO_THUMBNAIL blob,VIDEO_SIZE real not null,VIDEO_PROGRESS integer not null," +
+             "VIDEO_NAME text not null,VIDEO_THUMBNAIL blob,VIDEO_THUMBNAIL_PATH text,VIDEO_SIZE real not null,VIDEO_PROGRESS integer not null," +
              "VIDEO_RESOLUTION text,VIDEO_DATE real not null,VIDEO_DURATION real not null);");
      sqLiteDatabase.execSQL("create table if not exists VideoDownload(VIDEO_SAVE_PATH text primary key not null," +
              "VIDEO_DOWNLOAD_PATH text not null);");

@@ -16,4 +16,25 @@
         <item name="android:textColor">@drawable/rb_video_textcolor_selector</item>
     </style>
 
+    <!--自定义底部弹出窗-->
+    <style name="MyDialog" parent="android:Theme.Holo.Dialog">
+    <!--是否有边框-->
+        <item name="android:windowFrame">@null</item>
+        <!--是否悬浮在Activity上-->
+        <item name="android:windowIsFloating">true</item>
+        <!--标题-->
+        <item name="android:windowNoTitle">true</item>
+        <!--阴影-->
+        <item name="android:windowIsTranslucent">true</item>
+        <!--背景透明-->
+        <item name="android:windowBackground">@color/dialog</item>
+        <item name="android:scrollHorizontally">true</item>
+        <!--加一些弹出和退出动画-->
+    </style>
+
+    <style name="dialogAnimation" parent="android:Animation">
+      <item name="android:windowEnterAnimation">@anim/tranlate_dialog_in</item>
+        <item name="android:windowExitAnimation">@anim/tranlate_dialog_out</item>
+    </style>
+
 </resources>

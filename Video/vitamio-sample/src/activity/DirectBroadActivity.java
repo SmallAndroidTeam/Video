@@ -32,7 +32,7 @@ public class DirectBroadActivity extends Activity implements VideoView.VideoColl
    //http://live.hkstv.hk.lxdns.com/live/hks/playlist.m3u8
     //http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8
     //rtsp://184.72.239.149/vod/mp4://BigBuckBunny_175k.mov
-    private final  static String meettingPath="http://221.228.226.23/11/t/j/v/b/tjvbwspwhqdmgouolposcsfafpedmb/sh.yinyuetai.com/691201536EE4912BF7E4F1E2C67B8119.mp4";
+    private final  static String meettingPath="rtsp://184.72.239.149/vod/mp4://BigBuckBunny_175k.mov";
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,8 +59,11 @@ public class DirectBroadActivity extends Activity implements VideoView.VideoColl
     private void initVideo() {
         meettingVideoView.setMeettingPath(meettingPath);//设置直播的路径
         meettingVideoView.setVideoCollect(this);//为了更新收藏视图
+        meettingVideoView.setBufferSize(100);
+        meettingVideoView.requestFocus();
+        meettingVideoView.setMediaController(null);
        meettingVideoView.setVideoPath(meettingPath);
-    meettingVideoView.requestFocus();
+
      // meettingVideoView.setMediaController(new MediaController(this));
     meettingVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
         @Override
@@ -133,6 +136,9 @@ public class DirectBroadActivity extends Activity implements VideoView.VideoColl
 
     @Override
     public void deleteOnInfoAndOnBufferingUpdate() {
+        progressBar.setVisibility(View.GONE);
+        downloadRateView.setVisibility(View.GONE);
+        loadRateView.setVisibility(View.GONE);
         meettingVideoView.setOnInfoListener(null);
         meettingVideoView.setOnBufferingUpdateListener(null);
     }
@@ -150,6 +156,11 @@ public class DirectBroadActivity extends Activity implements VideoView.VideoColl
     @Override
     public boolean isTouchUse() {
         return false;
+    }
+
+    @Override
+    public void showShare() {
+
     }
 
 }

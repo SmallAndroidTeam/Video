@@ -107,8 +107,6 @@ public class VideoCollectOperation {
     }
 
 
-
-
     //存储收藏的视频信息到数据库
     public synchronized  boolean saveVideoCollect(Video video){
         final SQLiteDatabase sqLiteDatabase=videoCollectDatabaseHelper.getWritableDatabase();
@@ -123,6 +121,7 @@ public class VideoCollectOperation {
             values.put("VIDEO_RESOLUTION",video.getResolution());
             values.put("VIDEO_DATE",(float)video.getDate());
             values.put("VIDEO_DURATION",(float)video.getDuration());
+            values.put("VIDEO_THUMBNAIL_PATH",video.getThumbnailPath());
             sqLiteDatabase.insert(tableName,null,values);
             sqLiteDatabase.setTransactionSuccessful();
 
@@ -160,8 +159,11 @@ public class VideoCollectOperation {
                  long duration= (long) cursor.getFloat(cursor.getColumnIndex("VIDEO_DURATION"));//时长
                  Bitmap Thumbnail=bytesToBitmap(cursor.getBlob(cursor.getColumnIndex("VIDEO_THUMBNAIL")));//缩略图
                  Integer progress=cursor.getInt(cursor.getColumnIndex("VIDEO_PROGRESS"));//播放进度(最大值为1000）
+
+                  String thumbnail_path=cursor.getString(cursor.getColumnIndex("VIDEO_THUMBNAIL_PATH"));//缩略图地址（针对网络地址）
                 //android.util.Log.i("movie2", "love:11 "+progress);
                 Video video=new Video(videoPath,videoName,resolution,size,date,duration,Thumbnail,progress);
+                video.setThumbnailPath(thumbnail_path);
                 videoList.add(video);
             }while (cursor.moveToNext());
         }

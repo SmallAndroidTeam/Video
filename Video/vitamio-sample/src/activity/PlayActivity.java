@@ -1,29 +1,52 @@
 package activity;
 
 import android.app.Activity;
-import android.content.Context;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.mob.MobSDK;
+
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
+import adapter.ShareAdapter;
+import bean.ShareApplication;
 import broadcast.NetWorkChangeReceiver;
+import cn.sharesdk.framework.Platform;
+import cn.sharesdk.framework.PlatformActionListener;
+import cn.sharesdk.framework.ShareSDK;
+import cn.sharesdk.onekeyshare.OnekeyShare;
+import cn.sharesdk.tencent.qq.QQ;
+import cn.sharesdk.wechat.friends.Wechat;
+import cn.sharesdk.wechat.moments.WechatMoments;
 import fragment.CollectFragment;
 import fragment.FilmFragment;
 import fragment.SdCardFragment;
@@ -58,6 +81,8 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
     private Button net_unavailable_button;
     private ImageView net_unavailable_back;
     private boolean isFirstLoad=true;//判断此活动是否第一次加载
+    private Dialog bottomDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,6 +92,7 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
 //        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         Vitamio.isInitialized(this);
+        MobSDK.init(this);
         setContentView(R.layout.play_video_fragment);
         if(getIntent()!=null){
              position= getIntent().getIntExtra("position",0);
@@ -405,6 +431,120 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
         }
     }
 
+    @Override
+    public void showShare() {
+
+        bottomDialog = bottomDialog();
+        bottomDialog.show();
+    }
+
+
+    /**
+     * 点击分享
+     *
+     * @param position
+     * 0为微信好友，1为朋友圈
+     */
+    public void share_click(int position){
+      switch (position){
+          case 0:
+              share_WxFriend();
+               if(bottomDialog!=null){
+                   bottomDialog.cancel();
+          }
+              break;
+          case 1:
+              share_WxCircleFriend();
+              if(bottomDialog!=null){
+                  bottomDialog.cancel();
+              }
+              break;
+              default:
+                  break;
+        }
+    }
+
+    //分享到微信好友
+    public void share_WxFriend(){
+
+        // e21d939357cab3ca950c6b45e33bf88a
+       int videoPosition=videoView.getCurrentVideoPosition();
+
+        //Wechat.ShareParams shareParams=new Wechat.ShareParams();
+        Platform.ShareParams shareParams=new Platform.ShareParams();
+        shareParams.setShareType(Platform.SHARE_WEBPAGE);
+
+        shareParams.setTitle(videoList.get(videoPosition).getVideoName());
+        shareParams.setText("视频分享");
+        shareParams.setUrl(videoList.get(videoPosition).getVideoPath());
+        if(videoList.get(videoPosition).getThumbnailPath()!=null){
+            shareParams.setImageUrl(videoList.get(videoPosition).getThumbnailPath());
+        }else{
+            shareParams.setImageData(videoList.get(videoPosition).getThumbnail());
+        }
+
+
+        Platform platform=ShareSDK.getPlatform(Wechat.NAME);
+        platform.share(shareParams);
+
+        Log.i(TAG, "share_WxFriend: "+"//"+"微信好友"+"//"+videoPosition+"//"+videoList.get(videoPosition).getVideoName()
+                +"//"+videoList.get(videoPosition).getVideoPath()+"//"+videoList.get(videoPosition).getThumbnailPath());
+    }
+    //分享到微信朋友圈
+    public void share_WxCircleFriend(){
+        int videoPosition=videoView.getCurrentVideoPosition();
+        Platform.ShareParams shareParams=new Platform.ShareParams();
+        shareParams.setShareType(Platform.SHARE_WEBPAGE);
+
+        shareParams.setTitle(videoList.get(videoPosition).getVideoName());
+        shareParams.setText("视频分享");
+        shareParams.setUrl(videoList.get(videoPosition).getVideoPath());
+        if(videoList.get(videoPosition).getThumbnailPath()!=null){
+            shareParams.setImageUrl(videoList.get(videoPosition).getThumbnailPath());
+        }else{
+            shareParams.setImageData(videoList.get(videoPosition).getThumbnail());
+        }
+
+
+        Platform platform=ShareSDK.getPlatform(WechatMoments.NAME);
+        platform.share(shareParams);
+
+        Log.i(TAG, "share_WxFriend: "+"//"+"微信好友"+"//"+videoPosition+"//"+videoList.get(videoPosition).getVideoName()
+                +"//"+videoList.get(videoPosition).getVideoPath()+"//"+videoList.get(videoPosition).getThumbnailPath());
+    }
+     //分享弹出窗
+    public Dialog bottomDialog(){
+        View view = LayoutInflater.from(this).inflate(R.layout.buttom_dialog, null);
+        RecyclerView share_recyclerview=(RecyclerView)view.findViewById(R.id.share_recyclerview);
+        final  int count=4;//设置一行显示几个应用
+        final List<ShareApplication> shareApplications=new ArrayList<>();
+        final  ShareApplication wechat=new ShareApplication(R.drawable.ssdk_oks_classic_wechat,"微信好友");
+        final ShareApplication wechatmoments=new ShareApplication(R.drawable.ssdk_oks_classic_wechatmoments,"微信朋友圈");
+        shareApplications.add(wechat);
+        shareApplications.add(wechatmoments);
+
+        ShareAdapter shareAdapter=new ShareAdapter(this,shareApplications);
+        shareAdapter.setOnItemclickListener(new ShareAdapter.onItemclickListener() {
+            @Override
+            public void onClick(View view, int position) {
+                share_click(position);
+            }
+        });
+        StaggeredGridLayoutManager  staggeredGridLayoutManager=new StaggeredGridLayoutManager(count,StaggeredGridLayoutManager.VERTICAL);
+        share_recyclerview.setLayoutManager(staggeredGridLayoutManager);
+        share_recyclerview.setAdapter(shareAdapter);
+        Dialog dialog = new Dialog(this, R.style.MyDialog);
+        Window window = dialog.getWindow();
+        window.setGravity(Gravity.BOTTOM);
+        window.setWindowAnimations(R.style.dialogAnimation);
+        window.setContentView(view);
+
+        WindowManager.LayoutParams lp = window.getAttributes(); // 获取对话框当前的参数值
+        lp.width = getResources().getDisplayMetrics().widthPixels/2;//宽度占屏幕一半
+        lp.height =WindowManager.LayoutParams.WRAP_CONTENT;
+        window.setAttributes(lp);
+        return dialog;
+    }
 
     public void startDownLoadVideo(int position){
         if(!net_avaiable){//如果网络不可用

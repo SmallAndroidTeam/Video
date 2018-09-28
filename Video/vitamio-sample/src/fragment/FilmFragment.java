@@ -16,6 +16,7 @@ import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
@@ -25,9 +26,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import javax.security.auth.login.LoginException;
+
 import activity.PlayActivity;
 import adapter.FilmVideoAdapter;
 import broadcast.NetWorkChangeReceiver;
+import cn.sharesdk.sina.weibo.sdk.LoadingBar;
 import domain.NetMediaItem;
 import io.vov.vitamio.demo.R;
 import io.vov.vitamio.toast.oneToast;
@@ -52,6 +56,7 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
     public static final int REFRESH=2;
     private static final String footViewMessageOne="上拉加载更多...";
     private static final String footViewMessageTwo="正在加载更多数据...";
+    private static final String footViewMessageThree="人家也是有底线的...";
     private boolean isPerson=true;//是否为人为滑动
     public final static String NET_CONNNECT_CHANGE="android.net.conn.CONNECTIVITY_CHANGE";
     private NetWorkChangeReceiver netWorkChangeReceiver;
@@ -60,6 +65,7 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
     private View footView;
     private TextView load_text;
     private LinearLayout net_unavailable_layout;
+    private boolean isLoad=true;//是否加载
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -69,15 +75,22 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
                     //如果有数据
                     if (mTrailersBean != null && mTrailersBean.size() > 0) {
                         filmVideoAdapter =new FilmVideoAdapter(mTrailersBean,getContext());
+
                         if(onlineVideoListView.getFooterViewsCount()==0){
                             onlineVideoListView.addFooterView(footView);
-                            onlineVideoListView.requestFocus();
                         }
+
                         onlineVideoListView.setAdapter(filmVideoAdapter);
                         addOnlineVideoListViewListener();
                     }
                     break;
                 case LOADMORE:
+                    //无数据加载了
+                     if(!isLoad){
+                         load_progressbar.setVisibility(View.GONE);
+                         load_text.setText(footViewMessageThree);
+                         break;
+                     }
                     load_text.setText(footViewMessageTwo);
                     mTrailersBean.addAll(mTrailersBean);
                     filmVideoAdapter.setmTrailersBean(mTrailersBean);
@@ -98,13 +111,19 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
                             video.setVideoName(netMediaItem.getMovieName());
                             videoList.add(video);
                         }
-
                     }
                     isPerson=true;
+                    isLoad=false;
                     break;
                 case REFRESH:
+                     isLoad=true;
+                    isPerson=true;
+                    load_progressbar.setVisibility(View.VISIBLE);
+                    load_text.setText(footViewMessageOne);
+
                     filmVideoAdapter.setmTrailersBean(mTrailersBean);
                     filmVideoAdapter.notifyDataSetChanged();
+                    onlineVideoListView.setAdapter(filmVideoAdapter);
                     onlineSwipeRefreshLayout.setRefreshing(false);//设置刷新隐藏
                     oneToast.showMessage(getContext(),"刷新成功");
                     break;
@@ -114,6 +133,7 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
     };
     private ImageView net_unavailable_image;
     private TextView net_unavailable_tipText;
+    private ProgressBar load_progressbar;
 
 
     @Override
@@ -126,7 +146,6 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
         IntentFilter intentFilter=new IntentFilter();
         intentFilter.addAction(NET_CONNNECT_CHANGE);
         Objects.requireNonNull(this.getContext()).registerReceiver(netWorkChangeReceiver,intentFilter);
-
         initView(view);
         initOnlineVideo();
       addListener();
@@ -182,6 +201,7 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
                 io.vov.vitamio.bean.Video video=new io.vov.vitamio.bean.Video();
                 video.setVideoPath(netMediaItem.getHightUrl());
                 video.setVideoName(netMediaItem.getMovieName());
+                video.setThumbnailPath(netMediaItem.getCoverImg());
                 videoList.add(video);
             }
         }
@@ -197,6 +217,9 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
                 }else{
                     netAvailableShowView();
                 }
+                if(position==onlineVideoListView.getCount()-1){
+                    return;
+                }
                 PlayActivity.setVideoList(videoList);
                 Intent intent=new Intent(getActivity(), PlayActivity.class);
                 intent.putExtra("position",position);
@@ -208,10 +231,12 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
             public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
                 boolean result=isListViewReachBottomEdge(onlineVideoListView);
                 if(result&&isPerson){
+                    Log.i("movie2", "onScrollChange: 22");
                     load_text.setText(footViewMessageOne);
                     mHandler.sendEmptyMessage(LOADMORE);
                     isPerson=false;
                 }
+
             }
         });
     }
@@ -263,6 +288,7 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
     }
 
     private void initOnlineVideo() {
+
         if(!net_avaiable){//如果网络不可用
             netUnAvailableShowView();
             return;
@@ -281,13 +307,17 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
     private void initView(View view) {
         onlineVideoListView = (ListView)view.findViewById(R.id.onloneVideoListView);
         onlineSwipeRefreshLayout = (SwipeRefreshLayout)view.findViewById(R.id.onloneSwipeRefreshLayout);
-
+        onlineSwipeRefreshLayout.setRefreshing(true);
         onlineSwipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.RefreshProgressBackground);
         //设置颜色
         onlineSwipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_bright,android.R.color.holo_green_light,
                 android.R.color.holo_orange_light,android.R.color.holo_red_light);
         footView = LayoutInflater.from(getContext()).inflate(R.layout.listview_foot_load_view,null);
+        footView.setEnabled(false);
+        footView.setClickable(false);
         load_text = footView.findViewById(R.id.load_text);
+        load_text.setText(footViewMessageOne);
+        load_progressbar = footView.findViewById(R.id.probar);
 
         net_unavailable_layout = (LinearLayout)view.findViewById(R.id.net_unavailable);
         net_unavailable_image = (ImageView)view.findViewById(R.id.net_unavailable_image);

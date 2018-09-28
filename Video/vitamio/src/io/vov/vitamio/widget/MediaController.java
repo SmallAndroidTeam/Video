@@ -1308,7 +1308,7 @@ public float getCurrentBrigtness(){
   private int isShowTipTye=-1;//正在显示的提示信息，0代表的是音量，1代表的是亮度，2代表的播放进度，-1代表没显示
   @Override
   public boolean onTouchEvent(MotionEvent ev) {
-
+    //android.util.Log.i("movie2", "onTouchEvent: 33");
     final float mMaxVoice=mAM.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
     mGestureDetector.onTouchEvent(ev);
 

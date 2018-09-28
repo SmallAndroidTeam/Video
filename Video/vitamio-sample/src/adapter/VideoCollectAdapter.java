@@ -71,7 +71,8 @@ public class VideoCollectAdapter extends BaseAdapter {
             viewHolder= (VideoCollectAdapter.ViewHolder) view.getTag();
         }
         if(videoList.get(i).getVideoPath()!=null&&videoList.get(i).getThumbnail()==null){//网络图片
-            Glide.with(context).load(videoList.get(i).getVideoPath()).into(viewHolder.videoImageView);
+
+            Glide.with(context).load(videoList.get(i).getThumbnailPath()).into(viewHolder.videoImageView);
             viewHolder.videoSize.setVisibility(View.GONE);
         }else {
             Bitmap videoBitmap=null;

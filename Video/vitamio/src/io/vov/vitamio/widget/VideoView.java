@@ -671,14 +671,16 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
   private int isShowTipTye=-1;//正在显示的提示信息，0代表的是音量，1代表的是亮度，2代表的播放进度，-1代表没显示
   @Override
   public boolean onTouchEvent(MotionEvent ev) {
-
+   // android.util.Log.i("movie2", "onTouchEvent: 11");
     if(mMediaController==null){//如果没有显示控制按钮则没滑动没反应
       return true;
     }
+    //android.util.Log.i("movie2", "onTouchEvent: 22");
       if(videoCollect!=null&&!videoCollect.isTouchUse()){
        mMediaController.hide();
        return true;
       }
+
     final int  mScreenWidth= CommonUtils.getScreenWidth(getContext());
     final int mScreentHeight=CommonUtils.getScreenHeight(getContext());
     final AudioManager audioManager= (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
@@ -1258,12 +1260,26 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
   public void share() {
     android.util.Log.i("movie", "----------------------------share");
     if(CommonUtils.net_avaiable(mContext))
-    oneToast.showMessage(getContext(),"分享");
+    {
+      oneToast.showMessage(getContext(),"分享");
+      if(videoCollect!=null){
+        videoCollect.showShare();
+      }
+    }
+
     else{
       oneToast.showMessage(getContext(),"当前网络不可用");
     }
   }
 
+  //获取当前视频的下标
+  public int getCurrentVideoPosition(){
+    if(isHaveVideoList()){
+      return position;
+    }else{
+      return 0;//播放一个视频
+    }
+  }
   //判断当前的播放的视频是在线视频且没有本地下载
   public boolean currentVideoIsOnLineVideoAndNetUnavaiable(){
     Video video=videoList.get(position);
@@ -1499,5 +1515,6 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
     void downloadVideo(int position);//下载视频
     boolean ifDownloadLocalPlay(int position);//如果下载了就本地播放
     boolean isTouchUse();//判断滑动是否可用
+    void showShare();
   }
 }

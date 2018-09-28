@@ -89,7 +89,7 @@ public class FilmVideoAdapter extends BaseAdapter {
         else{
             viewHolder= (ViewHolder) convertView.getTag();
         }
-        Glide.with(mContext).load(mTrailersBean.get(position).getCoverImg()).into(viewHolder.item_net_video_img);
+         Glide.with(mContext).load(mTrailersBean.get(position).getCoverImg()).into(viewHolder.item_net_video_img);
          viewHolder.item_net_video_tv_title.setText(mTrailersBean.get(position).getVideoTitle());
          viewHolder.item_net_video_tv_desc.setText(mTrailersBean.get(position).getSummary());
        return convertView;
