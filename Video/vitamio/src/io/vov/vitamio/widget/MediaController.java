@@ -319,8 +319,14 @@ public class MediaController extends FrameLayout {
   private AdapterView.OnItemClickListener mPlayModeListViewLinstener=new AdapterView.OnItemClickListener() {
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-      final float[] speed={1.5f,2.0f,1.0f,0.5f,0.8f};//没有实现后退
-      mPlayer.setPlaybackSpeed(speed[i]);
+      final float[] speed={1.5f,2.0f,1.0f,1.5f,2f};//没有实现后退
+      if(i<=2)
+      {
+        mPlayer.setPlaybackSpeed(speed[i]);
+      }
+      else{
+       mPlayer.setBackPlaySpeed(speed[i]);
+      }
       hidePlayModeListView();
       mPlayer.continuePlay();
       show(sDefaultTimeout);
@@ -1567,6 +1573,9 @@ public float getCurrentBrigtness(){
 
     void share();
     void setPlaybackSpeed(float speed);
+
+    void setBackPlaySpeed(float speed);
+
 
     long getDuration();
 

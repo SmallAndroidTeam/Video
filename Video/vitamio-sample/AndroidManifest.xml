@@ -5,11 +5,14 @@
     android:versionCode="002"
     android:versionName="0.0.2">
     <uses-sdk
-        android:minSdkVersion="7"
+        android:minSdkVersion="12"
         android:targetSdkVersion="27" />
+     <!--OTG权限（读取U盘需要的权限）-->
+    <uses-permission android:name="android.hardware.usb.host" android:required="false" />
+    <uses-permission android:name="android.permission.LOCATION_HARDWARE.usb.accessory"/>
+    <uses-feature android:name="android.hardware.usb.host" android:required="true" />
 
-
-
+    <!--分享功能需要的权限-->
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -25,6 +28,7 @@
 
 
 
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -40,6 +44,7 @@
         android:allowBackup="false"
         android:icon="@drawable/ic_launcher"
         android:label="@string/vitamio_demo_name"
+        android:supportsRtl="true"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 
         <!-- Don't forgot InitActivity -->
@@ -50,36 +55,31 @@
             android:screenOrientation="landscape"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:windowSoftInputMode="stateAlwaysHidden" />
-        <activity android:name="activity.LoadingActivity"
+        <activity android:name=".activity.LoadingActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:process=":vitamio"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name="activity.MainActivity"
+            android:name=".activity.MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:process=":vitamio"
             android:screenOrientation="landscape">
         </activity>
         <activity
-            android:name="activity.PlayActivity"
+            android:name=".activity.PlayActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:process=":vitamio"
             android:screenOrientation="landscape" />
         <activity
-            android:name="activity.DirectBroadActivity"
+            android:name=".activity.DirectBroadActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:process=":vitamio"
             android:screenOrientation="landscape" />
 
         <receiver
-            android:name="broadcast.NetWorkChangeReceiver"
+            android:name=".broadcast.NetWorkChangeReceiver"
             android:enabled="true"
             android:exported="true">
         </receiver>

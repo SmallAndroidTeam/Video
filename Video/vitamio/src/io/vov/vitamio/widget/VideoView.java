@@ -17,6 +17,7 @@
 
 package io.vov.vitamio.widget;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -27,6 +28,8 @@ import android.graphics.Point;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Pair;
 import android.util.SparseArray;
@@ -103,6 +106,7 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
         setVideoLayout(mVideoLayout, mAspectRatio);
     }
   };
+
   OnPreparedListener mPreparedListener = new OnPreparedListener() {
     public void onPrepared(MediaPlayer mp) {
       Log.d("onPrepared");
@@ -691,6 +695,7 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
 
         mStartX=ev.getX();
         mStartY=ev.getY();
+        if(mMediaPlayer!=null)
         mDownProgress=mMediaPlayer.getCurrentPosition();
         mDownVoice=audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         totalDistance=Math.min(mScreenWidth,mScreentHeight);
@@ -1019,7 +1024,7 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
 
             mMediaController.setProgressRightSlide(videoList.get(position).getProgress());
           }
-          android.util.Log.i("movie2", "start: "+videoList.get(position).getProgress()+"//"+videoList.get(position).getDuration());
+          android.util.Log.i("movie2", "start11: "+videoList.get(position).getProgress()+"//"+videoList.get(position).getDuration());
         }
       mMediaPlayer.start();
       mCurrentState = STATE_PLAYING;
@@ -1075,6 +1080,8 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
 
   }
   public void pause() {
+
+    deleteMessages();
     if (isInPlaybackState()) {
 
       if (mMediaPlayer.isPlaying()) {
@@ -1086,6 +1093,18 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
     mTargetState = STATE_PAUSED;
   }
 
+  //缓冲的时候暂停
+  public void bufferPause(){
+    if (isInPlaybackState()) {
+
+      if (mMediaPlayer.isPlaying()) {
+        videoList.get(position).setProgress((int) (1000.0*mMediaPlayer.getCurrentPosition()/mMediaPlayer.getDuration()));
+        mMediaPlayer.pause();
+        mCurrentState = STATE_PAUSED;
+      }
+    }
+    mTargetState = STATE_PAUSED;
+  }
   private boolean isHaveVideoList(){
     if(videoList.size()>0){
       return true;
@@ -1291,9 +1310,64 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
   }
   @Override
   public void setPlaybackSpeed(float speed) {
+    deleteMessages();
     mMediaPlayer.setPlaybackSpeed(speed);
   }
 
+  private final  static int BACKPLAY=0;//后退播放
+  private final  static int TWOBACKPLAY=1;//二倍后退播放
+  private final static long BACKPLAY_TIME= 400;
+  private final static long TWOBACKPLAY_TIME=200;
+  @SuppressLint("HandlerLeak")
+  private Handler mhandle=new Handler(){
+    @Override
+    public void handleMessage(Message msg) {
+      switch (msg.what){
+        case BACKPLAY:
+          long duration=0;
+          if(mMediaPlayer!=null)
+      duration=mMediaPlayer.getCurrentPosition()-1000;
+         if(duration>0){
+            mMediaPlayer.seekTo(duration);
+           mhandle.sendEmptyMessageDelayed(BACKPLAY,BACKPLAY_TIME);
+         }else{
+           mhandle.removeMessages(BACKPLAY);
+           if(mMediaPlayer!=null)
+           mMediaPlayer.stop();
+         }
+
+          break;
+        case TWOBACKPLAY:
+          long duration1=mMediaPlayer.getCurrentPosition()-1000;
+          if(duration1>0){
+            mMediaPlayer.seekTo(duration1);
+            mhandle.sendEmptyMessageDelayed(BACKPLAY,TWOBACKPLAY_TIME);
+          }else{
+            mhandle.removeMessages(TWOBACKPLAY);
+            if(mMediaPlayer!=null)
+            mMediaPlayer.stop();
+
+          }
+          break;
+          default:
+            break;
+      }
+    }
+  };
+  @Override
+  public void setBackPlaySpeed(float speed) {
+    deleteMessages();
+  if(speed>1){
+    mhandle.sendEmptyMessage(TWOBACKPLAY);
+  }else{
+    mhandle.sendEmptyMessage(BACKPLAY);
+  }
+
+  }
+   private void deleteMessages(){
+     mhandle.removeMessages(BACKPLAY);
+     mhandle.removeMessages(TWOBACKPLAY);
+   }
 
   public void hideMediaControlAllTip(){
     if(mMediaController!=null){

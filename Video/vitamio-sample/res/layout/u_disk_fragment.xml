@@ -3,10 +3,43 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
     <TextView
+        android:visibility="gone"
+        android:id="@+id/uDisk_tip"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="U盘"
+        android:text="请插入U盘,点击刷新"
         android:layout_gravity="center"
         android:textColor="@color/indexText"
         android:gravity="center"/>
+    <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/loading_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+       android:gravity="center"
+        android:orientation="vertical"
+        >
+            <ProgressBar
+                android:id="@+id/probar"
+                style="?android:progressBarStyleLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        <TextView
+            android:id="@+id/download_rate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:textColor="@color/download_rate"
+            android:text="加载中..."/>
+    </LinearLayout>
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/udiskVideoRefresh"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ListView
+            android:id="@+id/videoListView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </ListView>
+    </android.support.v4.widget.SwipeRefreshLayout>
 </LinearLayout>

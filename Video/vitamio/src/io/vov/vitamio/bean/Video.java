@@ -146,4 +146,9 @@ public class Video {
                 ", duration=" + duration +
                 '}';
     }
+    //将毫秒变为日期
+    public static String ConvertDate(long duration){
+        final   SimpleDateFormat format=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return  format.format(duration);
+    }
 }
