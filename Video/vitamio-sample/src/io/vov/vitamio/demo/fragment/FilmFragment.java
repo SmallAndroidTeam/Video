@@ -29,17 +29,18 @@ import java.util.Objects;
 
 
 import io.vov.vitamio.demo.R;
+import io.vov.vitamio.demo.activity.DownloadCenterActivity;
 import io.vov.vitamio.demo.activity.PlayActivity;
 import io.vov.vitamio.demo.adapter.FilmVideoAdapter;
 import io.vov.vitamio.demo.broadcast.NetWorkChangeReceiver;
 import io.vov.vitamio.demo.domain.NetMediaItem;
 import io.vov.vitamio.demo.utils.Constants;
+import io.vov.vitamio.demo.utils.SaveVideoDownloadStatus;
 import io.vov.vitamio.toast.oneToast;
 import io.vov.vitamio.utils.CommonUtils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-
 
 /**
  * Created by MR.XIE on 2018/9/24.
@@ -150,7 +151,6 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
     private TextView net_unavailable_tipText;
     private ProgressBar load_progressbar;
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view=inflater.inflate(R.layout.film_fragment,container,false);
@@ -166,17 +166,22 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
       addListener();
         return  view;
     }
-    @Override
-    public void netAvailable() {
-        net_avaiable=true;
-       //oneToast.showMessage(this.getContext(),"当前网络可用");
-    }
 
     @Override
     public void netUnAvailable() {
         net_avaiable=false;
         oneToast.showMessage(this.getContext(),"当前网络不可用");
        // netUnAvailableShowView();
+    }
+
+    @Override
+    public void netWIFIAvaiable() {
+        net_avaiable=true;
+    }
+
+    @Override
+    public void netGPRSAvaiable() {
+        net_avaiable=true;
     }
 
     @Override
@@ -213,6 +218,7 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
                 videoList=new ArrayList<>();
             }
             for(NetMediaItem.TrailersBean netMediaItem:mTrailersBean){
+
                 io.vov.vitamio.bean.Video video=new io.vov.vitamio.bean.Video();
                 video.setVideoPath(netMediaItem.getHightUrl());
                 video.setVideoName(netMediaItem.getMovieName());
@@ -261,11 +267,10 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
             @Override
             public void onRefresh() {
                 if(!net_avaiable){//如果网络不可用
-                      netUnAvailableShowView();
-                    onlineSwipeRefreshLayout.setRefreshing(false);
+                      mHandler.sendEmptyMessage(NETUNAVAILABLE);
                     return;
                 }else{
-                    netAvailableShowView();
+                    mHandler.sendEmptyMessage(NETAVAILABLE);
                 }
                 new Thread(new Runnable() {
                     @Override
@@ -337,6 +342,7 @@ public class FilmFragment extends Fragment implements NetWorkChangeReceiver.NetW
         net_unavailable_layout = (LinearLayout)view.findViewById(R.id.net_unavailable);
         net_unavailable_image = (ImageView)view.findViewById(R.id.net_unavailable_image);
         net_unavailable_tipText = (TextView)view.findViewById(R.id.net_unavailable_tipText);
+
     }
 
     //从网络获取视频

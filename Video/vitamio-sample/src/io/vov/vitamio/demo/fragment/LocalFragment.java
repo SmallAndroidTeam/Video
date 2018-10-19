@@ -25,7 +25,7 @@ import io.vov.vitamio.demo.saveDate.SaveCollectFragment;
  * Created by MR.XIE on 2018/9/7.
  */
 public class LocalFragment extends Fragment implements View.OnClickListener {
-    private final String[] titles={"U盘","SD卡"};
+    private final String[] titles={"U盘","本地存储"};
     private ViewPager viewPager;
     private List<Fragment> fragmentList=new ArrayList<>();
     private TableLayout underline;
@@ -37,7 +37,7 @@ public class LocalFragment extends Fragment implements View.OnClickListener {
          initView(view);
          initPosition();//初始化位置
         fragmentList.add(new UDiskFragment());
-        SdCardFragment sdCardFragment=new SdCardFragment();
+        SdCardFragment sdCardFragment= new SdCardFragment();
         fragmentList.add(sdCardFragment);
         SaveCollectFragment.setSdCardFragment(sdCardFragment);
         FragmentPagerAdapter fragmentPagerAdapter=new fragmentAdapter(getFragmentManager(),fragmentList);
@@ -46,6 +46,10 @@ public class LocalFragment extends Fragment implements View.OnClickListener {
         viewPager.setCurrentItem(1);
         setListener();
        return  view;
+    }
+
+    public List<Fragment> getFragmentList() {
+        return fragmentList;
     }
 
     private void initPosition() {
@@ -127,6 +131,7 @@ public class LocalFragment extends Fragment implements View.OnClickListener {
              break;
          case R.id.sdCard:
              viewPager.setCurrentItem(1);
+             ((SdCardFragment)fragmentList.get(1)).UpdateView();
              setOneTabPosition(1);
              break;
              default:

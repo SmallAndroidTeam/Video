@@ -45,11 +45,14 @@
             android:textColor="@color/download_rate"
             android:text=""/>
     </LinearLayout>
+
       <RelativeLayout
-          android:id="@+id/net_unavailable_layout"
+          android:id="@+id/net_layout"
           android:layout_width="match_parent"
           android:layout_height="match_parent"
-          android:visibility="gone">
+          android:background="#000000"
+          android:visibility="gone"
+        >
           <ImageView
               android:id="@+id/net_unavailable_back"
               android:layout_marginTop="30dp"
@@ -57,6 +60,7 @@
               android:layout_height="40dp"
               android:src="@drawable/net_unavaiable_back_button"/>
           <LinearLayout
+              android:id="@+id/net_unavailable_layout"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical"
@@ -78,6 +82,32 @@
                   android:paddingLeft="15dp"
                   android:paddingRight="15dp"
                   android:text="@string/playview_net_unavailable_button"/>
+          </LinearLayout>
+
+          <LinearLayout
+              android:id="@+id/net_mobile_layout"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:gravity="center"
+              android:visibility="gone"
+              >
+              <TextView
+                  android:id="@+id/net_mobile_tipText"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="@string/playview_mibile_tiptext"
+                  />
+              <Button
+                  android:id="@+id/net_mobile_button"
+                  android:layout_marginTop="5dp"
+                  android:background="@drawable/shape"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textColor="#ffff"
+                  android:paddingLeft="15dp"
+                  android:paddingRight="15dp"
+                  android:text="@string/playview_net_mibile_button"/>
           </LinearLayout>
       </RelativeLayout>
 

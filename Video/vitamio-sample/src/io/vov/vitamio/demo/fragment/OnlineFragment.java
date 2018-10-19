@@ -73,7 +73,12 @@ public class OnlineFragment extends Fragment {
     private void setOneTabPosition(final int i){
          if(i<fragmentList.size()&&i>=0){
             onlineAdapter.setTitleName(onlineAdapter.getTitleList()[i]);
-             onlineTitleRecyclerView.smoothScrollToPosition(i);
+            if(i==1){
+                onlineTitleRecyclerView.smoothScrollToPosition(0);
+            }else if(i==fragmentList.size()-2){
+                onlineTitleRecyclerView.smoothScrollToPosition(fragmentList.size()-1);
+            }
+
 
              final Timer timer=new Timer();
              timer.schedule(new TimerTask() {

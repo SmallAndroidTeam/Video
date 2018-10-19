@@ -39,6 +39,7 @@ public class LoadingActivity extends Activity {
         //        requestWindowFeature(Window.FEATURE_NO_TITLE);
         //       getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.loading_activity);
         getPermission(); //动态获取权限
     }
 

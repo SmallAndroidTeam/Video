@@ -1,54 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.DrawerLayout
+    android:id="@+id/mDrawerLayout"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
     tools:context="activity.MainActivity"
-    android:orientation="vertical"
-    android:background="@color/indexBackground">
-<FrameLayout
-    android:id="@+id/mainFragment"
+    android:layout_height="match_parent"
     android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_weight="1"
-    android:background="@color/localVideoListItem"
-></FrameLayout>
-<RadioGroup
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center"
-    android:padding="2dp"
-    android:orientation="horizontal">
-    <RadioButton
-        android:id="@+id/rb_localvideo"
-        android:drawableTop="@drawable/rb_video_drawable_selector"
-        style="@style/radiobutton_style"
-        android:text="本地视频"
-       />
-    <RadioButton
-        android:id="@+id/rb_netvideo"
-        android:drawableTop="@drawable/rb_net_video_drawable_selector"
-        style="@style/radiobutton_style"
-        android:text="在线视频"
+    >
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/indexBackground">
+        <FrameLayout
+            android:id="@+id/mainFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@color/localVideoListItem"
+            ></FrameLayout>
+        <RadioGroup
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:padding="2dp"
+            android:orientation="horizontal">
+            <RadioButton
+                android:id="@+id/rb_localvideo"
+                android:drawableTop="@drawable/rb_video_drawable_selector"
+                style="@style/radiobutton_style"
+                android:text="本地视频"
+                />
+            <RadioButton
+                android:id="@+id/rb_netvideo"
+                android:drawableTop="@drawable/rb_net_video_drawable_selector"
+                style="@style/radiobutton_style"
+                android:text="在线视频"
+                />
+            <RadioButton
+                android:id="@+id/rb_netdirectbroad"
+                android:drawableTop="@drawable/rb_video_drawable_selector"
+                style="@style/radiobutton_style"
+                android:text="在线直播"
+                />
+            <RadioButton
+                android:id="@+id/rb_collectvideo"
+                android:drawableTop="@drawable/rb_video_drawable_selector"
+                style="@style/radiobutton_style"
+                android:text="收藏夹"
+                />
+            <!--<RadioButton-->
+                <!--android:id="@+id/rb_personalcentre"-->
+                <!--android:drawableTop="@drawable/ic_tab_video"-->
+                 <!--style="@style/radiobutton_personCentre_style"-->
+                <!--android:text="个人中心"-->
+                <!--/>-->
+            <RadioButton
+                android:id="@+id/rb_personalcentre"
+                android:drawableTop="@drawable/rb_video_drawable_selector"
+                style="@style/radiobutton_style"
+                android:text="个人中心"
+                />
+        </RadioGroup>
+    </LinearLayout>
+    <ListView
+        android:background="#fff"
+        android:id="@+id/personalcentre_listview"
+        android:layout_gravity="start"
+        android:layout_width="250dp"
+        android:layout_height="match_parent"
+        android:divider="@null"
+        android:clipToPadding="false"
         />
-    <RadioButton
-        android:id="@+id/rb_netdirectbroad"
-        android:drawableTop="@drawable/rb_video_drawable_selector"
-        style="@style/radiobutton_style"
-        android:text="在线直播"
-        />
-    <RadioButton
-        android:id="@+id/rb_collectvideo"
-        android:drawableTop="@drawable/rb_video_drawable_selector"
-        style="@style/radiobutton_style"
-        android:text="收藏夹"
-        />
-    <RadioButton
-        android:id="@+id/rb_personalcentre"
-        android:drawableTop="@drawable/rb_video_drawable_selector"
-        style="@style/radiobutton_style"
-        android:text="个人中心"
-        />
-</RadioGroup>
-   -->
-</LinearLayout>
+
+</android.support.v4.widget.DrawerLayout>

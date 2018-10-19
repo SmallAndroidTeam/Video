@@ -100,7 +100,7 @@ public class DirectBroadActivity extends Activity implements VideoView.VideoColl
             public boolean onInfo(MediaPlayer mp, int what, int extra) {
                 switch (what){
                     case MediaPlayer.MEDIA_INFO_BUFFERING_START:
-                           meettingVideoView.pause();
+                             meettingVideoView.pause();
                             progressBar.setVisibility(View.VISIBLE);
                             loadRateView.setText("");
                             downloadRateView.setText("");

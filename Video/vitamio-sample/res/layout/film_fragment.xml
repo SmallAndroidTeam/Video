@@ -2,7 +2,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
-
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/onloneSwipeRefreshLayout"
         android:layout_width="match_parent"
@@ -10,10 +9,12 @@
         <ListView
             android:id="@+id/onloneVideoListView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            >
         </ListView>
 
     </android.support.v4.widget.SwipeRefreshLayout>
+
     <LinearLayout
         android:id="@+id/net_unavailable"
         android:layout_width="wrap_content"

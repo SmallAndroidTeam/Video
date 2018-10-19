@@ -9,4 +9,6 @@
     <color name="localVideoListItem">#b6c6c3</color>
     <color name="RefreshProgressBackground">#21486c</color>
     <color name="dialog">#ffff</color>
+    <color name="deleteEnable">#960f0f</color>
+    <color name="deleteUnEnable">#fff</color>
 </resources>

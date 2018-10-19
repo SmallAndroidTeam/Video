@@ -11,7 +11,9 @@ import android.util.Log;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.vov.vitamio.R;
 import io.vov.vitamio.bean.Video;
@@ -29,6 +31,7 @@ public class VideoCollectOperation {
     private final static  String videoDownTableName="VideoDownload";
     private VideoCollectDatabaseHelper videoCollectDatabaseHelper;
    private final static String TAG="movie4";
+   private final static float MAX_DOWNVIDEO_TOTAL_SIZE=1024*1024*1024;//最大下载总视频的大小为1024M
     public VideoCollectOperation(Context context) {
         this.context = context;
         this.videoCollectDatabaseHelper=new VideoCollectDatabaseHelper(context,dbName,null,1);
@@ -45,7 +48,8 @@ public class VideoCollectOperation {
              }else{
                  sqLiteDatabase.execSQL("insert into "+videoDownTableName+"(VIDEO_SAVE_PATH,VIDEO_DOWNLOAD_PATH) values (?,?)",new String[]{saveVideoPath,downloadVideoPath});
              }
-              sqLiteDatabase.setTransactionSuccessful();
+             sqLiteDatabase.setTransactionSuccessful();
+
          }catch (Exception e){
              e.printStackTrace();
              return false;
@@ -55,6 +59,67 @@ public class VideoCollectOperation {
          }
          return true;
     }
+
+    //如果下载的视频大于1G则先把视频下载下来，再通过子线程把最先下载的视频删除,直到下载的总视频大小不大于1G
+    public  synchronized void keepDownloadVideoTotalSize(final String DownLoadPath){
+        if(DownLoadPath==null){
+            return;
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                File file=new File(DownLoadPath);
+                List<Video> downVideoPaths=new ArrayList<>();//存储视频的下载地址
+                double currentDownVideoTotalSize=0;//当前下载视频的总的大小
+                if(!file.exists()||file.isFile()){
+                    Log.i("movie2", "下载路径获取失败");
+                }else{
+                    SQLiteDatabase sqLiteDatabase= videoCollectDatabaseHelper.getWritableDatabase();
+                    Cursor cursor= sqLiteDatabase.rawQuery("select * from "+videoDownTableName,null);
+                    if(cursor.moveToFirst()){
+                        do{
+                            String path=cursor.getString(cursor.getColumnIndex("VIDEO_SAVE_PATH"));
+                            File file1=new File(path);
+                            if(file1.exists()&&file1.isFile())
+                            {
+                                Video video=new Video();
+                                video.setVideoPath(path);
+                                video.setSize(file1.length());
+                                downVideoPaths.add(video);
+                                currentDownVideoTotalSize+=file1.length();//得到总的下载视频大小
+                            }
+
+                        }while (cursor.moveToNext());
+                    }
+                    Log.i("movie2", "当前下载视频总的大小为："+currentDownVideoTotalSize+"//"+currentDownVideoTotalSize/1024/1024+"M"+"\n总的视频个数为：" +
+                            ""+downVideoPaths.size());
+                    if(currentDownVideoTotalSize>MAX_DOWNVIDEO_TOTAL_SIZE){//如果下载视频的总大小大于1G
+                        for(Video video:downVideoPaths){
+                            String path=video.getVideoPath();
+                            long videoSize=video.getSize();
+                            File file1=new File(path);
+                            if(file1.exists()&&file1.isFile()){
+                                if(file1.delete())//如果删成功
+                                {
+                                    deleteSaveVideo(path);//删除存储的视频
+                                    currentDownVideoTotalSize-=videoSize;
+                                    if(currentDownVideoTotalSize<=MAX_DOWNVIDEO_TOTAL_SIZE){
+                                        Log.i("movie2", "现在下载视频总的大小为："+currentDownVideoTotalSize+"//"+currentDownVideoTotalSize/1024/1024+"M");
+                                        break;
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+
+                }
+            }
+        }).start();
+
+    }
+
+
 
     //删除存储的地址
     public synchronized  void deleteSaveVideo(String saveVideoPath){
@@ -70,6 +135,8 @@ public class VideoCollectOperation {
           sqLiteDatabase.close();
         }
     }
+
+
 
     //判断存储的地址是否已存在下载表中
     public synchronized  boolean isExistsVideoSave(String saveVideoPath){

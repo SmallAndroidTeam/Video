@@ -60,4 +60,34 @@ public class CommonUtils {
             return false;
         }
     }
+
+    //判断当前的wifi是否连接
+    public static boolean net_wifi_avaiable(Context context){
+        ConnectivityManager connectivityManager= (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        boolean isWifiConnected= connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED;
+      return isWifiConnected;
+    }
+
+    //判断当前的gprs是否连接
+    public static boolean net_gprs_avaiable(Context context){
+        ConnectivityManager connectivityManager= (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        boolean isGPRSConnected=connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState()==NetworkInfo.State.CONNECTED;
+        return isGPRSConnected;
+    }
+
+    //0表示网络不可用,1表示网络为WIFI，2表示网络为GPRS(获取当前的网络状态）
+    public static int getCurrentNetState(Context context) {
+        if (!net_avaiable(context)) {
+            return 0;
+        } else {
+            if(net_wifi_avaiable(context)){
+                return 1;
+            }
+            else{
+                return 2;
+            }
+
+        }
+    }
+
 }

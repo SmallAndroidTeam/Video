@@ -7,5 +7,7 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string  name="net_unavailable">网络不给力，点击试试吧~</string>
     <string  name="playview_net_unavailable_tiptext">网络不给力，请检查网络设置</string>
+    <string  name="playview_mibile_tiptext">播放将消耗流量</string>
     <string  name="playview_net_unavailable_button">刷新重试</string>
+    <string  name="playview_net_mibile_button">继续播放</string>
 </resources>

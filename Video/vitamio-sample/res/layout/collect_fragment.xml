@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <TextView
        android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -11,9 +12,45 @@
         android:background="@color/indexBackground"
         android:textStyle="bold"
         android:text="收藏的视频"/>
-    <ListView
-        android:id="@+id/videoCollectListView"
+    <TextView
+        android:id="@+id/collect_tip"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="空空如也,点击刷新"
+        android:layout_gravity="center"
+        android:textColor="@color/indexText"
+        android:gravity="center"/>
+    <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/loading_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        >
+        <ProgressBar
+            android:id="@+id/probar"
+            style="?android:progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <TextView
+            android:id="@+id/download_rate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:textColor="@color/download_rate"
+            android:text="加载中..."/>
+    </LinearLayout>
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/collectVideoRefresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-    </ListView>
+        <ListView
+            android:id="@+id/videoCollectListView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            >
+        </ListView>
+    </android.support.v4.widget.SwipeRefreshLayout>
+
 </LinearLayout>

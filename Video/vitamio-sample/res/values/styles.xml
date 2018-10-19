@@ -16,6 +16,19 @@
         <item name="android:textColor">@drawable/rb_video_textcolor_selector</item>
     </style>
 
+
+
+    <style name="radiobutton_personCentre_style">
+        <item name="android:button">@android:color/transparent</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:padding">1dp</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/indexText</item>
+    </style>
+
     <!--自定义底部弹出窗-->
     <style name="MyDialog" parent="android:Theme.Holo.Dialog">
     <!--是否有边框-->

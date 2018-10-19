@@ -4,31 +4,35 @@
     package="io.vov.vitamio.demo"
     android:versionCode="002"
     android:versionName="0.0.2">
+
     <uses-sdk
         android:minSdkVersion="12"
         android:targetSdkVersion="27" />
-     <!--OTG权限（读取U盘需要的权限）-->
-    <uses-permission android:name="android.hardware.usb.host" android:required="false" />
-    <uses-permission android:name="android.permission.LOCATION_HARDWARE.usb.accessory"/>
-    <uses-feature android:name="android.hardware.usb.host" android:required="true" />
+    <!-- OTG权限（读取U盘需要的权限） -->
+    <uses-permission
+        android:name="android.hardware.usb.host"
+        android:required="false" />
+    <uses-permission android:name="android.permission.LOCATION_HARDWARE.usb.accessory" />
 
-    <!--分享功能需要的权限-->
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="true" />
+
+    <!-- 分享功能需要的权限 -->
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!--查询网络状态权限-->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
-    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <!-- 蓝牙分享所需的权限 -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-
-
-
-    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -40,6 +44,7 @@
     <uses-permission android:name="android.permission.FLASHLIGHT" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
+    <uses-permission android:name="android.permission.MODIFY_PHONE_STATE"/>
     <application
         android:allowBackup="false"
         android:icon="@drawable/ic_launcher"
@@ -55,11 +60,13 @@
             android:screenOrientation="landscape"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:windowSoftInputMode="stateAlwaysHidden" />
-        <activity android:name=".activity.LoadingActivity"
+        <activity
+            android:name=".activity.LoadingActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
@@ -67,8 +74,7 @@
         <activity
             android:name=".activity.MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:screenOrientation="landscape">
-        </activity>
+            android:screenOrientation="landscape"></activity>
         <activity
             android:name=".activity.PlayActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
@@ -77,12 +83,19 @@
             android:name=".activity.DirectBroadActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:screenOrientation="landscape" />
-
+         <activity android:name=".activity.DownloadCenterActivity"
+             android:configChanges="orientation|screenSize|keyboardHidden"
+             android:screenOrientation="landscape"
+             />
         <receiver
             android:name=".broadcast.NetWorkChangeReceiver"
             android:enabled="true"
-            android:exported="true">
-        </receiver>
+            android:exported="true"></receiver>
+
+        <service
+            android:name=".service.DownLoadService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 
 </manifest>

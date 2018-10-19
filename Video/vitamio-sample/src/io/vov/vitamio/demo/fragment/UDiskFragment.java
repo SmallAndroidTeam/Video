@@ -97,6 +97,7 @@ public class UDiskFragment extends Fragment {
     private final  static int REFRESH=3;//刷新
     private final  static int UDISK_DETACHED=4;//U盘拔出
     private final  static int RELOADVIDEOLIST=5;//重新加载
+    private final  static int NOUDISK=6;//没U盘插入
     private static Context mContext;
     private static List<Video> videoList=new ArrayList<>();//播放的视频列表
     private final  static String UDISK_MOUNT_ADDRESS="/mnt/usb";//u盘的挂载地址（手动挂载地址）"/mnt/sdcard/mnt/usb"
@@ -119,6 +120,13 @@ public class UDiskFragment extends Fragment {
                     oneToast.showMessage(mContext,"读取U盘失败");
                     uDiskVideoRefresh.setRefreshing(false);
                     break;
+                case NOUDISK:
+                    loadingLayout.setVisibility(View.GONE);
+                    uDiskTipMessage.setText("请插入U盘,点击刷新");
+                    uDiskTipMessage.setVisibility(View.VISIBLE);
+
+                    uDiskVideoRefresh.setRefreshing(false);
+                    break;
                 case LOADVIDEOLIST:
                     loadingLayout.setVisibility(View.GONE);
                     if(videoList.size()>0){
@@ -136,7 +144,6 @@ public class UDiskFragment extends Fragment {
                     }
                     break;
                 case REFRESH:
-
                     loadingLayout.setVisibility(View.GONE);
                     if(videoList.size()>0){
                         uDiskTipMessage.setVisibility(View.GONE);
@@ -184,12 +191,15 @@ public class UDiskFragment extends Fragment {
         View view=inflater.inflate(R.layout.u_disk_fragment,container,false);
         initView(view);
         initOnclickListener();
+
         if(videoList.size()>0){
             uDiskTipMessage.setVisibility(View.GONE);
             udiskAdapter = new UdiskAdapter(videoList,this.getContext());
             videoListView.setAdapter(udiskAdapter);
         }else{
+
             uDiskTipMessage.setVisibility(View.VISIBLE);
+            uDiskTipMessage.callOnClick();
         }
         isStart=true;
         return view;
@@ -226,14 +236,14 @@ public class UDiskFragment extends Fragment {
             public void onClick(View v) {
                 new Thread(new Runnable() {
                     @Override
-                    public void run() { synchronized (this){
+                    public void run() {
+                        synchronized (this){
                         mhandler.sendEmptyMessage(RELOADVIDEOLIST);
                         if(getUdiskAudioList()){
-                            mhandler.sendEmptyMessage(REFRESH);
+                            mhandler.sendEmptyMessageDelayed(REFRESH,500);
                         }else{
-                            mhandler.sendEmptyMessage(READFAIL);
+                            mhandler.sendEmptyMessageDelayed(NOUDISK,500);
                         }
-                        uDiskVideoRefresh.setRefreshing(false);
                     }
                     }
                 }).start();

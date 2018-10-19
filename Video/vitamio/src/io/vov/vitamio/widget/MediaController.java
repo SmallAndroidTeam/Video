@@ -140,6 +140,7 @@ public class MediaController extends FrameLayout {
           hide();
           break;
         case SHOW_PROGRESS:
+          android.util.Log.i("movie2", "handleMessage: 进度条");
           pos = setProgress();
           if (!mDragging && mShowing) {
             msg = obtainMessage(SHOW_PROGRESS);
@@ -160,8 +161,11 @@ public class MediaController extends FrameLayout {
   };
   private View.OnClickListener mPauseListener = new View.OnClickListener() {
     public void onClick(View v) {
-      doPauseResume();
+
       show(sDefaultTimeout);
+      doPauseResume();
+
+
     }
   };
 
@@ -302,7 +306,12 @@ public class MediaController extends FrameLayout {
   };
 
  public  void unregisterReceiver(){
-   mContext.unregisterReceiver(mBatteryReceiver);
+   try {
+     mContext.unregisterReceiver(mBatteryReceiver);
+   }catch (Exception e){
+
+   }
+
  }
 
   //点击全屏按钮
@@ -327,7 +336,9 @@ public class MediaController extends FrameLayout {
       else{
        mPlayer.setBackPlaySpeed(speed[i]);
       }
+
       hidePlayModeListView();
+      if(!mPlayer.isPlaying())
       mPlayer.continuePlay();
       show(sDefaultTimeout);
     }
@@ -472,8 +483,9 @@ public void setVoideType(){
         }
         else{
           isOnlyShowTipCon=false;
-          doPauseResume();
           show(sDefaultTimeout);
+          doPauseResume();
+
         }
 
       }
@@ -616,6 +628,7 @@ public void showNoAnimal(){
     mHandler.sendEmptyMessageDelayed(HIDE_TIP,2000);
   }
 
+
   private OnSeekBarChangeListener mSeekListener = new OnSeekBarChangeListener() {
     public void onStartTrackingTouch(SeekBar bar) {
       mDragging = true;
@@ -653,7 +666,10 @@ public void showNoAnimal(){
       mHandler.removeMessages(SHOW_PROGRESS);
       mAM.setStreamMute(AudioManager.STREAM_MUSIC, false);
       mDragging = false;
+
+      if(mPlayer.isPlaying())//重点  不然滑动进度条会自动播放
       mHandler.sendEmptyMessageDelayed(SHOW_PROGRESS, 1000);
+
     }
   };
 
@@ -710,6 +726,19 @@ public void showNoAnimal(){
 
     return true;
   }
+
+
+  //注销电量广播
+  public void UnregisterBatteryReceiver(){
+    try{
+      if(mBatteryReceiver!=null)
+        mContext.unregisterReceiver(mBatteryReceiver);
+    }catch (Exception e){
+      android.util.Log.i(TAG, "电量广播已经注销了");
+    }
+
+  }
+
 
   @SuppressLint("MissingSuperCall")
   @Override
@@ -1065,9 +1094,18 @@ public void showNoAnimal(){
       if (mShownListener != null)
         mShownListener.onShown();
     }
-    showControl();
+
+      showControl();
     updatePausePlay();
     mHandler.sendEmptyMessage(SHOW_PROGRESS);
+//      if(mPlayer.isPlaying()){
+//        mHandler.sendEmptyMessage(SHOW_PROGRESS);
+//      }else{
+//        mHandler.removeMessages(SHOW_PROGRESS);
+//      }
+
+    // mHandler.sendEmptyMessage(SHOW_PROGRESS);
+
     mHandler.removeMessages(HIDE_TIP);
     if (timeout != 0) {
       mHandler.removeMessages(FADE_OUT);
@@ -1098,6 +1136,7 @@ public void showNoAnimal(){
         mHiddenListener.onHidden();
       hideAllTip();
     }
+
   }
 
   public void setOnShownListener(OnShownListener l) {
@@ -1479,7 +1518,7 @@ public float getCurrentBrigtness(){
     return super.dispatchKeyEvent(event);
   }
 
-  private void updatePausePlay() {
+  public void updatePausePlay() {
     if (mRoot == null || mPauseButton == null)
       return;
 
@@ -1497,9 +1536,10 @@ public float getCurrentBrigtness(){
   private void doPauseResume() {
     if (mPlayer.isPlaying())
     {
-      mPlayer.pause();
-      if(mPlayModeListView.getVisibility()==GONE)
-      showOneTipByIndex(3);
+       mPlayer.pause();
+       if(mPlayModeListView.getVisibility()==GONE)
+       showOneTipByIndex(3);
+    mHandler.removeMessages(SHOW_PROGRESS);
       mHandler.removeMessages(HIDE_TIPICON);
       mHandler.sendEmptyMessageDelayed(HIDE_TIPICON,2000);//2000毫秒之后自动隐藏掉提示图标
     }

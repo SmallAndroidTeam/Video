@@ -307,8 +307,12 @@ public class FileManger {
             time=mediaPlayer.getDuration();
            // Log.i(TAG, "getVideoDuration:55");
         } catch (IOException e) {
-            e.printStackTrace();
+           // e.printStackTrace();//媒体播放器一般是准备失败，不打印出错误信息
+        }finally {
+            mediaPlayer.reset();
+            mediaPlayer.release();
         }
+
         //Log.i(TAG, "getVideoDuration:66"+time);
         return time;
     }

@@ -2,11 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
-<TextView
+<ImageView
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:text="个人"
-    android:layout_gravity="center"
-    android:textColor="@color/indexText"
-    android:gravity="center"/>
+    android:layout_height="160dp"
+    android:scaleType="fitXY"
+    android:src="@drawable/personcentre_header"/>
 </LinearLayout>

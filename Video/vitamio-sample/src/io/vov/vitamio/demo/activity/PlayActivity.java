@@ -1,7 +1,10 @@
 package io.vov.vitamio.demo.activity;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 
@@ -11,6 +14,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.provider.Settings;
+
 
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -25,6 +29,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -57,6 +62,7 @@ import io.vov.vitamio.demo.fragment.FilmFragment;
 import io.vov.vitamio.demo.fragment.SdCardFragment;
 import io.vov.vitamio.demo.localData.FileManger;
 import io.vov.vitamio.demo.saveDate.SaveCollectFragment;
+import io.vov.vitamio.demo.service.DownLoadService;
 import io.vov.vitamio.demo.utils.HttpUtil;
 import io.vov.vitamio.provider.VideoCollectOperation;
 import io.vov.vitamio.toast.oneToast;
@@ -64,7 +70,7 @@ import io.vov.vitamio.utils.CommonUtils;
 import io.vov.vitamio.widget.MediaController;
 import io.vov.vitamio.widget.VideoView;
 
-public class PlayActivity extends Activity implements VideoView.VideoCollect, View.OnTouchListener, HttpUtil.LocalPlay, NetWorkChangeReceiver.NetWorkChange {
+public class PlayActivity extends Activity implements VideoView.VideoCollect, View.OnTouchListener, NetWorkChangeReceiver.NetWorkChange, DownLoadService.DownLoadSuccess, VideoView.NetChange {
     private VideoView videoView;
     private ProgressBar progressBar;
     private TextView downloadRateView;
@@ -76,13 +82,16 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
     private static boolean isExists=false;//判断播放界面是否存在
     private NetWorkChangeReceiver netWorkChangeReceiver;
     private boolean net_avaiable=false;//判断网络是否可用
-    private RelativeLayout net_unavailable_layout;
+    private RelativeLayout net_layout;
     private TextView net_unavailable_tipText;
     private Button net_unavailable_button;
     private ImageView net_unavailable_back;
     private boolean isFirstLoad=true;//判断此活动是否第一次加载
     private Dialog bottomDialog;
-
+    private LinearLayout net_unavailable_layout;
+    private LinearLayout net_mobile_layout;
+    private TextView net_mobile_tipText;
+    private Button net_mobile_button;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,63 +109,167 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
         //注册网络变化广播
         netWorkChangeReceiver = new NetWorkChangeReceiver();
         netWorkChangeReceiver.setNetWorkChange(this);
+
         net_avaiable= CommonUtils.net_avaiable(this);//获取当前的网络是否可用
+
         IntentFilter intentFilter=new IntentFilter();
         intentFilter.addAction(FilmFragment.NET_CONNNECT_CHANGE);
          registerReceiver(netWorkChangeReceiver,intentFilter);
         ininView();
         initVideo();
         isExists=true;
+        DownLoadService.setPlayActivityContext(this);//设置下载服务的播放界面的上下文环境
         Log.i("movie2", "onCreate: 创建playAcitvity播放界面");
     }
 
-
-    //网络可用
-    @Override
-    public void netAvailable() {
-        net_avaiable=true;
+    public static boolean isIsExists() {
+        return isExists;
     }
 
     //网络不可用
     @Override
     public void netUnAvailable() {
+
         net_avaiable=false;
         //判断当前的播放的视频是在线视频且没有本地下载,且此页面不是第一次加载（判断是否第一次加载是因为如果网络不可用时点击收藏界面的视频时，还没等搜索数据库判断在线视频是否已下载就执行此函数）
-
-      if(videoView.currentVideoIsOnLineVideoAndNetUnavaiable()&&!isFirstLoad)
+      if(videoView.currentVideoIsOnLineVideo()&&!isFirstLoad)
       {
+          Log.i("movie9", "netUnAvailable: 111111");
           netUnAvailableShowView();
       }
     }
 
-    //网络可用时需要显示的视图
-    private  void netAvailableShowView(){
-        net_unavailable_layout.setVisibility(View.GONE);
+    @Override
+    public void netWIFIAvaiable() {
+
+        net_avaiable=true;
+        //判断当前的播放的视频是在线视频且没有本地下载
+        if(videoView.currentVideoIsOnLineVideo()&&!isFirstLoad) {
+            netAvailableShowView();
+            videoView.continuePlay();
+        }
     }
 
-    //网络不可用时需要显示的视图
-    private  void netUnAvailableShowView(){
+    @Override
+    public void netGPRSAvaiable() {
+        net_avaiable=true;
+        //判断当前的播放的视频是在线视频且没有本地下载
+        if(videoView.currentVideoIsOnLineVideo()&&!isFirstLoad) {
+            netGPRSAvaiableShowView();
+            Log.i("movie3", "netGPRSAvaiable: 11");
+        }
+        Log.i("movie3", "netGPRSAvaiable: 22");
+
+    }
+
+    //网络可用时需要显示的视图
+    private  void netAvailableShowView(){
         //隐藏缓冲信息
         progressBar.setVisibility(View.GONE);
         downloadRateView.setVisibility(View.GONE);
         loadRateView.setVisibility(View.GONE);
-       net_unavailable_layout.setVisibility(View.VISIBLE);
-        //当前的播放的视频是在线视频且没有本地下载,且当前的网络不可用
-        if(videoView.currentVideoIsOnLineVideoAndNetUnavaiable()){
+        net_layout.setVisibility(View.GONE);
+
+    }
+
+   //只有GPRS可用时需要显示的视图
+    private void netGPRSAvaiableShowView(){
+        //隐藏缓冲信息
+        progressBar.setVisibility(View.GONE);
+        downloadRateView.setVisibility(View.GONE);
+        loadRateView.setVisibility(View.GONE);
+
+
+        net_layout.setVisibility(View.VISIBLE);
+        net_unavailable_layout.setVisibility(View.GONE);
+        net_mobile_layout.setVisibility(View.VISIBLE);
+
+        Log.i("movie3", "netGPRSAvaiableShowView: "+videoView.currentVideoIsOnLineVideo());
+        //当前的播放的视频是在线视频且没有本地下载
+        if(videoView.currentVideoIsOnLineVideo()){
+
+            Log.i("movie3", "netGPRSAvaiableShowView: 11");
             //隐藏控制按钮
+            videoView.pause();
+            videoView.hideMediaControl();
             videoView.hideMediaControlAllTip();
+
+        }
+    }
+
+
+    //网络不可用时需要显示的视图
+    private  void netUnAvailableShowView(){
+
+        //隐藏缓冲信息
+        progressBar.setVisibility(View.GONE);
+        downloadRateView.setVisibility(View.GONE);
+        loadRateView.setVisibility(View.GONE);
+
+        net_layout.setVisibility(View.VISIBLE);
+        net_unavailable_layout.setVisibility(View.VISIBLE);
+        net_mobile_layout.setVisibility(View.GONE);
+        //当前的网络不可用
+        //当前的播放的视频是在线视频且没有本地下载
+        if(videoView.currentVideoIsOnLineVideo()){
+
+            //隐藏控制按钮
+            videoView.pause();
+
+            videoView.hideMediaControl();
+            videoView.hideMediaControlAllTip();
+            
+        }
+        //oneToast.showMessage(this,"当前网络不可用");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.i("movie2", "onStart: ");
+    }
+
+
+    @Override
+    protected void onPause() {
+        if(videoView.isPlaying()){
             videoView.hideMediaControl();
             videoView.pause();
         }
-        oneToast.showMessage(this,"当前网络不可用");
+        super.onPause();
+        Log.i("movie2", "onPause: ");
     }
 
+    @Override
+    protected void onStop() {
+        if(videoView.isPlaying()){
+            videoView.hideMediaControl();
+            videoView.pause();
+        }
+        super.onStop();
+        Log.i("movie2", "onStop: ");
+    }
+
+    @Override
+    protected void onRestart() {
+        Log.i("movie2", "onRestart: ");
+        if(net_layout.getVisibility()==View.GONE)
+        {
+            videoView.shareVideoContinuePlay();
+        }
+        else{
+            videoView.setPlayStatus();  //如果无网络时返回播放界面时,设置播放状态，因为后面videoView控件中要执行sufaceCreated
+        }
+        super.onRestart();
+
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         isExists=false;
         unregisterReceiver(netWorkChangeReceiver);
+        videoView.release_resource();//释放资源
         Log.i("movie2", "onCreate: 摧毁playAcitvity播放界面");
     }
 
@@ -178,11 +291,17 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
         downloadRateView.setText("拼命加载中....");
         downloadRateView.setVisibility(View.VISIBLE);
 
-        net_unavailable_layout = (RelativeLayout)this.findViewById(R.id.net_unavailable_layout);
+        net_layout = (RelativeLayout)this.findViewById(R.id.net_layout);
         net_unavailable_back = (ImageView)this.findViewById(R.id.net_unavailable_back);
         net_unavailable_tipText = (TextView)this.findViewById(R.id.net_unavailable_tipText);
         net_unavailable_button = (Button)this.findViewById(R.id.net_unavailable_button);
 
+        //网络不可用的提示信息
+        net_unavailable_layout = this.findViewById(R.id.net_unavailable_layout);
+        //此时的网络是GPRS时的提示信息
+        net_mobile_layout = this.findViewById(R.id.net_mobile_layout);
+        net_mobile_tipText = this.findViewById(R.id.net_mobile_tipText);
+        net_mobile_button = this.findViewById(R.id.net_mobile_button);
     }
     private void initVideo() {
         // path= Environment.getExternalStorageDirectory().getPath()+"/Movies/"+"test.swf";
@@ -192,7 +311,8 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
         if(videoList==null&&videoList.size()<=0){
             return;
         }
-         videoView.setVideoCollect(this);//为了更新收藏视图
+        videoView.setVideoCollect(this);//为了更新收藏视图
+        videoView.setNetChange(this);//网络变化
         videoView.setPosition(position);
         videoView.setMediaController(new MediaController(this));
         videoView.setVideoList(new ArrayList<Video>(videoList));
@@ -204,13 +324,14 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
                 videoView.setProgress();
             }
         });
+
         videoView.requestFocus();
 
         //注册一个回调函数，在视频预处理完成后调用。在视频预处理完成后被调用。此时视频的宽度、高度、宽高比信息已经获取到，此时可调用seekTo让视频从指定位置开始播放。
         videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
-                mp.setPlaybackSpeed(1.0f);
+                    mp.setPlaybackSpeed(1.0f);
             }
         });
 
@@ -220,15 +341,41 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
             public boolean onError(MediaPlayer mp, int what, int extra) {
 
                 //判断当前的播放的视频是在线视频且没有本地下载
-                if(videoView.currentVideoIsOnLineVideoAndNetUnavaiable())
+                if(videoView.currentVideoIsOnLineVideo())
                 {
                     if(CommonUtils.net_avaiable(getApplicationContext())){//如果当前网络可用
                         oneToast.showMessage(PlayActivity.this,"视频打开失败");
                         videoView.next();
-                    }else{
+                    }else {
+                        if(!isFirstLoad){//表示已经访问过数据库，真的没本地下载
+                            videoView.pause();
+                            netUnAvailableShowView();
+                        }else{
 
-                        videoView.pause();
-                        netUnAvailableShowView();
+                            VideoCollectOperation videoCollectOperation=new VideoCollectOperation(getApplication());
+                            String   videoSavePath= videoCollectOperation.getSavePathByDownloadPath(videoList.get(videoView.getCurrentVideoPosition()).getVideoPath());
+                            Log.i(TAG, "ifDownloadLocalPlay: 下载的视频地址为:"+videoList.get(videoView.getCurrentVideoPosition()).getVideoPath()+"//保存的地址为:"+videoSavePath);
+                            if(videoSavePath!=null&&new File(videoSavePath).exists()){//如果在线视频本地已下载,且存在
+                                File videoSavePathFile=new File(videoSavePath);
+                                // oneToast.showMessage(this,"此视频已下载");
+                                Video video=new Video();
+                                video.setVideoPath(videoSavePathFile.getAbsolutePath());
+                                video.setVideoName(videoSavePathFile.getName());
+                                video.setSize(FileManger.getSize(videoSavePathFile.getAbsolutePath()));
+                                video.setDate(FileManger.getDate(videoSavePathFile.getAbsolutePath()));
+                                video.setDuration(FileManger.getVideoDuration(videoSavePathFile.getAbsolutePath()));
+                                video.setProgress(videoList.get(position).getProgress());
+                                video.setThumbnail(FileManger.getVideoThumbnailThree(videoSavePathFile.getAbsolutePath(), MediaStore.Images.Thumbnails.MICRO_KIND));
+                                video.setNetworkVideoAddress(videoList.get(position).getVideoPath());
+                                videoView.localPlay(video,position);
+                                videoView.setVideoURI(Uri.parse(video.getVideoPath()));
+                            }else{
+
+                                netUnAvailableShowView();
+                            }
+                            isFirstLoad=true;
+                        }
+
                     }
 
                 }else{
@@ -251,12 +398,24 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
             @Override
             public void onClick(View v) {
                 if(CommonUtils.net_avaiable(getApplication())){
+
                     netAvailableShowView();
-                    videoView.resetSetVideoUri();//重新设置播放路径
+                    videoView.resetContinuePlay();//继续播放
 
                 }
             }
         });
+
+        net_mobile_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(CommonUtils.net_avaiable(getApplication())){
+                    netAvailableShowView();
+                    videoView.continuePlay();//继续播放
+                }
+            }
+        });
+
 
     }
 
@@ -308,10 +467,12 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
                         videoView.hideMediaControlAllTip();
                         break;
                     case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-                        videoView.continuePlay();
+                        Log.i("movie3", "onInfo: 11111");
                         progressBar.setVisibility(View.GONE);
                         downloadRateView.setVisibility(View.GONE);
                         loadRateView.setVisibility(View.GONE);
+                        if(!videoView.isPlaying())//判断用户是否按下暂停按钮
+                        videoView.continuePlay();
                         break;
                     default:
                         break;
@@ -335,8 +496,8 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
         progressBar.setVisibility(View.GONE);
         downloadRateView.setVisibility(View.GONE);
         loadRateView.setVisibility(View.GONE);
-    videoView.setOnInfoListener(null);
-    videoView.setOnBufferingUpdateListener(null);
+         videoView.setOnInfoListener(null);
+          videoView.setOnBufferingUpdateListener(null);
     }
 
     @Override
@@ -349,7 +510,7 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
     public boolean onTouch(View v, MotionEvent event) {
         //当前的播放的视频是在线视频且没有本地下载,且当前的网络不可用
         //videoView.currentVideoIsOnLineVideoAndNetUnavaiable()&&!CommonUtils.net_avaiable(getApplicationContext())
-        if(net_unavailable_layout.getVisibility()==View.VISIBLE){
+        if(net_layout.getVisibility()==View.VISIBLE){
             //隐藏控制按钮
             videoView.hideMediaControl();
             return true;
@@ -410,10 +571,10 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
             video.setThumbnail(FileManger.getVideoThumbnailThree(videoSavePathFile.getAbsolutePath(), MediaStore.Images.Thumbnails.MICRO_KIND));
             video.setNetworkVideoAddress(videoList.get(position).getVideoPath());
              videoView.localPlay(video,position);
-            isFirstLoad=false;
+              isFirstLoad=false;
              oneToast.showMessage(this,"此视频已下载,正在本地播放");
         }else{
-
+            Log.i("movie9", "ifDownloadLocalPlay: 111");
             if(!net_avaiable){//如果网络不可用
                 isFirstLoad=false;
                 netUnAvailableShowView();
@@ -427,7 +588,7 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
 
     @Override
     public boolean isTouchUse() {
-        if(net_unavailable_layout.getVisibility()==View.VISIBLE){
+        if(net_layout.getVisibility()==View.VISIBLE){
             return false;
         }else{
             return true;
@@ -442,6 +603,13 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
     }
 
 
+    //判断本机上是否安装了微信
+    public boolean WxClientIsValid(){
+        Platform wechat=ShareSDK.getPlatform(Wechat.NAME);
+        boolean clientValid=wechat.isClientValid();
+        return  clientValid;
+    }
+
     /**
      * 点击分享
      *
@@ -451,15 +619,28 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
     public void share_click(int position){
       switch (position){
           case 0:
-              share_WxFriend();
+
+
                if(bottomDialog!=null){
                    bottomDialog.cancel();
+                   if(WxClientIsValid()){//判断本机上是否安装了微信
+                       share_WxFriend();
+                   }else{
+                       oneToast.showMessage(this,"请安装微信客户端");
+                   }
+
           }
               break;
           case 1:
-              share_WxCircleFriend();
+
               if(bottomDialog!=null){
                   bottomDialog.cancel();
+              }
+
+              if(WxClientIsValid()){//判断本机上是否安装了微信
+                  share_WxCircleFriend();
+              }else{
+                  oneToast.showMessage(this,"请安装微信客户端");
               }
               break;
               default:
@@ -469,6 +650,7 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
     private final static int SHARESUCCESS=1;
     private final static int SHAREERROR=2;
     private final static int SHARECANCEL=3;
+   @SuppressLint("HandlerLeak")
    private Handler mhander=new Handler(){
        @Override
        public void handleMessage(Message msg) {
@@ -488,6 +670,8 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
            }
        }
    };
+
+
 
     //分享到微信好友
     public void share_WxFriend(){
@@ -585,6 +769,9 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
         StaggeredGridLayoutManager  staggeredGridLayoutManager=new StaggeredGridLayoutManager(count,StaggeredGridLayoutManager.VERTICAL);
         share_recyclerview.setLayoutManager(staggeredGridLayoutManager);
         share_recyclerview.setAdapter(shareAdapter);
+
+
+
         Dialog dialog = new Dialog(this, R.style.MyDialog);
         Window window = dialog.getWindow();
         window.setGravity(Gravity.BOTTOM);
@@ -598,17 +785,18 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
         return dialog;
     }
 
-    public void startDownLoadVideo(int position){
+    public void startDownLoadVideo(final int position){
         if(!net_avaiable){//如果网络不可用
             netUnAvailableShowView();
             return;
         }
-        if(HttpUtil.downloadingVideoPath.contains(videoList.get(position).getVideoPath())){
+        if(HttpUtil.isExistList(videoList.get(position).getVideoPath())){
             oneToast.showMessage(this,"此视频正在下载");
             return;
         }
+
         VideoCollectOperation videoCollectOperation=new VideoCollectOperation(this);
-       String   videoSavePath= videoCollectOperation.getSavePathByDownloadPath(videoList.get(position).getVideoPath());
+        String   videoSavePath= videoCollectOperation.getSavePathByDownloadPath(videoList.get(position).getVideoPath());
         Log.i(TAG, "startDownLoadVideo: 下载的视频地址为:"+videoList.get(position).getVideoPath()+"//保存的地址为:"+videoSavePath);
         if(videoSavePath!=null&&new File(videoSavePath).exists()){//如果在线视频本地已下载,且存在
             File videoSavePathFile=new File(videoSavePath);
@@ -624,11 +812,51 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
             videoView.downLoadLocalPlay(video,position);
           oneToast.showMessage(this,"此视频已下载,正在本地播放");
         }else{
-            oneToast.showMessage(this,"开始下载");
-            HttpUtil httpUtil=new HttpUtil(this,position);
-            httpUtil.setLocalPlay(this);
-            httpUtil.sendHttpRequest(videoList.get(position).getVideoPath(),videoList.get(position).getVideoName());
+            DownLoadService.setDownLoadSuccess(this);
+            if(CommonUtils.net_wifi_avaiable(this)){//如果现在网络是wifi
+                oneToast.showMessage(this,"开始WIFI下载");
+                //            HttpUtil httpUtil=new HttpUtil(this,position);
+                //            httpUtil.setLocalPlay(this);
+                //            httpUtil.sendHttpRequest(videoList.get(position).getVideoPath(),videoList.get(position).getVideoName());
+                DownLoadService.setDownLoadSuccess(this);
+                Intent intent=new Intent(this,DownLoadService.class);
+                intent.setAction(DownLoadService.DOWNLOAD);
+                intent.putExtra("position",position);
+                intent.putExtra("downLoadVideoPath",videoList.get(position).getVideoPath());
+                intent.putExtra("videoName",videoList.get(position).getVideoName());
+                intent.putExtra("coverImg",videoList.get(position).getThumbnailPath());
+                startService(intent);
+
+            }else if(CommonUtils.net_gprs_avaiable(this)){//如果网络是gprs
+                new AlertDialog.Builder(this).setTitle("下载").setMessage("当前处于移动数据网络，确定下载？").setNegativeButton("下载", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        oneToast.showMessage(getApplication(),"使用流量下载");
+                        //            HttpUtil httpUtil=new HttpUtil(this,position);
+                        //            httpUtil.setLocalPlay(this);
+                        //            httpUtil.sendHttpRequest(videoList.get(position).getVideoPath(),videoList.get(position).getVideoName());
+
+                        Intent intent=new Intent(getApplication(),DownLoadService.class);
+                        intent.setAction(DownLoadService.DOWNLOAD);
+                        intent.putExtra("position",position);
+                        intent.putExtra("downLoadVideoPath",videoList.get(position).getVideoPath());
+                        intent.putExtra("videoName",videoList.get(position).getVideoName());
+                        intent.putExtra("coverImg",videoList.get(position).getThumbnailPath());
+                        startService(intent);
+
+                    }
+                }).setPositiveButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                }).setCancelable(false).create().show();
+            }
+
+
         }
+
     }
     //下载完之后开始本地播放
     public void startLocalPlay(int position){
@@ -653,14 +881,48 @@ public class PlayActivity extends Activity implements VideoView.VideoCollect, Vi
         }
     }
 
-
-
-
     @Override
-    public void localPlay(int position) {
-        startLocalPlay(position);
+    public void localPaly(String downLoadVideoPath, int position) {
+        Log.i("movie7", "下载的视频为： "+downLoadVideoPath);
+        if(position<videoList.size()&&videoList.get(position).getVideoPath().contentEquals(downLoadVideoPath)){
+            Log.i("movie7", "localPaly: 11");
+            startLocalPlay(position);
+        }
+        Log.i("movie7", "localPaly: 22");
     }
 
 
+    //videoView网络变化接口实现
+    @Override
+    public void netUnavaiable() {
+        Log.i("movie10", "netUnavaiable: 111");
+        netUnAvailableShowView();
+
+    }
+
+    @Override
+    public void netWifiAvaiable() {
+        netWIFIAvaiable();
+    }
+
+    @Override
+    public void netGprsAvaiable() {
+        netGPRSAvaiable();
+    }
+
+    @Override
+    public void setLoadSignTrue() {
+        isFirstLoad=true;
+    }
+
+    @Override
+    public void hideNetTip() {
+        //隐藏缓冲信息
+        progressBar.setVisibility(View.GONE);
+        downloadRateView.setVisibility(View.GONE);
+        loadRateView.setVisibility(View.GONE);
+        net_layout.setVisibility(View.GONE);
+
+    }
 }
 

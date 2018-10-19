@@ -6,6 +6,7 @@ import android.util.Log;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -31,9 +32,27 @@ public class VideoDownload {
         }
     }
 
+    public static String getVideoPathPrefix() {
+        return videoPathPrefix;
+    }
+
     public String getVideoAbsolutePath() {
         return videoAbsolutePath;
     }
+
+
+
+    //继续下载执行的构造函数
+    public VideoDownload(Context context,String videoAbsolutePath,boolean isAppend){
+        this.mContext=context;
+        this.videoAbsolutePath=videoAbsolutePath;
+        try {
+            writer=new FileOutputStream(videoAbsolutePath,true);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     //保存视频的每一行直到结束
      public boolean saveVideoByLine(byte[] line,int readCount){
@@ -54,6 +73,11 @@ public class VideoDownload {
                return false;
            }
      }
+
+
+
+
+
 
      //关闭写操作流
      public void closeWriter(){
@@ -81,7 +105,7 @@ public class VideoDownload {
 
     }
 
-     //获取一个不存在的视频路径
+     //获取一个不存在的视频名称
      public  static  String getNoExistVideoPath(String address,String path){
          initVideoPathPrefix();
         if(path==null||address==null){
