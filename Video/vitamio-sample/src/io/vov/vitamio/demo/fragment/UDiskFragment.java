@@ -100,7 +100,8 @@ public class UDiskFragment extends Fragment {
     private final  static int NOUDISK=6;//没U盘插入
     private static Context mContext;
     private static List<Video> videoList=new ArrayList<>();//播放的视频列表
-    private final  static String UDISK_MOUNT_ADDRESS="/mnt/usb";//u盘的挂载地址（手动挂载地址）"/mnt/sdcard/mnt/usb"
+  //  private final  static String UDISK_MOUNT_ADDRESS="/mnt/usb";//u盘的挂载地址（手动挂载地址）"/mnt/sdcard/mnt/usb"//"/storage/A63E-2DC8
+  private final  static String UDISK_MOUNT_ADDRESS="/storage/A63E-2DC8";
     private static String UDISK_MOUNT_POINT=null;//U盘的挂载点
     private final static String UDISK_PROC_MOUNTS="/proc/mounts";//系统中挂载的所有目录
     private static boolean isStart=false;//判断是否启动了

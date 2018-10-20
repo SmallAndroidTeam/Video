@@ -13,6 +13,7 @@ import android.util.Log;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 
+import io.vov.vitamio.demo.activity.DownloadCenterActivity;
 import io.vov.vitamio.demo.activity.PlayActivity;
 import io.vov.vitamio.demo.broadcast.NetWorkChangeReceiver;
 import io.vov.vitamio.demo.fragment.FilmFragment;
@@ -32,6 +33,7 @@ public class DownLoadService extends Service implements HttpUtil.LocalPlay, NetW
     private static boolean isPauseDownload=false;//是否暂停下载
     private static Context mainActivityContext;//主页的上下文环境
     private static Context playActivityContext;//播放界面的上下文环境
+    private static Context DownloadCenterActivityContext;//下载控制界面的上下文环境
     private static DownLoadSuccess downLoadSuccess;//下载成功接口
     private NetWorkChangeReceiver netWorkChangeReceiver;//网络变化广播
     private AlertDialog alertDialog;
@@ -42,6 +44,10 @@ public class DownLoadService extends Service implements HttpUtil.LocalPlay, NetW
 
     public static void setPlayActivityContext(Context playActivityContext) {
         DownLoadService.playActivityContext = playActivityContext;
+    }
+
+    public static void setDownloadCenterActivityContext(Context downloadCenterActivityContext) {
+        DownloadCenterActivityContext = downloadCenterActivityContext;
     }
 
     public static void setIsPauseDownload(boolean isPauseDownload) {
@@ -148,9 +154,13 @@ public class DownLoadService extends Service implements HttpUtil.LocalPlay, NetW
             if(PlayActivity.isIsExists())
             {
                 mcontext=playActivityContext;
-            }else{
+            }else if(DownloadCenterActivity.isIsExists()){
+                mcontext=DownloadCenterActivityContext;
+            }
+            else{
                 mcontext=mainActivityContext;
             }
+
             if(alertDialog==null){
                 alertDialog = new AlertDialog.Builder(mcontext).setTitle("下载").setMessage("当前处于移动数据网络，确定下载？").setNegativeButton("下载", new DialogInterface.OnClickListener() {
                     @Override

@@ -30,6 +30,7 @@ import java.util.Timer;
 
 import io.vov.vitamio.demo.R;
 import io.vov.vitamio.demo.adapter.DownloadAdapter;
+import io.vov.vitamio.demo.service.DownLoadService;
 import io.vov.vitamio.demo.utils.DownLoadingState;
 import io.vov.vitamio.demo.utils.HttpUtil;
 import io.vov.vitamio.demo.utils.SaveVideoDownloadStatus;
@@ -49,6 +50,7 @@ public class DownloadCenterActivity extends Activity implements View.OnClickList
     private LinearLayout selectDelete;
     private TextView selectAll;
     private TextView deleteSelect;
+    private static boolean isExists=false;//判断界面是否存在
     private final  static int UPTATE_DOWNLOAD_VIEW=0;//更新下载视图
     @SuppressLint("HandlerLeak")
   private Handler mhander=new Handler(){
@@ -73,6 +75,12 @@ public class DownloadCenterActivity extends Activity implements View.OnClickList
         initview();
         addData();
         initListener();
+        isExists=true;
+        DownLoadService.setDownloadCenterActivityContext(this);
+    }
+
+    public static boolean isIsExists() {
+        return isExists;
     }
 
     public static List<SaveVideoDownloadStatus> getDownloadVideos() {
@@ -178,6 +186,7 @@ public class DownloadCenterActivity extends Activity implements View.OnClickList
     protected void onDestroy() {
         super.onDestroy();
         mhander.removeCallbacks(runnable);
+        isExists=false;
     }
 
     private void initListener() {
