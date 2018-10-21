@@ -1635,10 +1635,11 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
     return mDuration;
   }
 
+  //改了一下
   public long getCurrentPosition() {
-    if (isInPlaybackState())
+     // if (isInPlaybackState())
       return mMediaPlayer.getCurrentPosition();
-    return 0;
+  //  return 0;
   }
 
   public void seekTo(long msec) {
@@ -1650,8 +1651,10 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
     }
   }
 
+  ///这里改了一下
   public boolean isPlaying() {
-    return isInPlaybackState() && mMediaPlayer.isPlaying();
+    //return isInPlaybackState() && mMediaPlayer.isPlaying();
+    return mMediaPlayer.isPlaying();
   }
 
   @Override

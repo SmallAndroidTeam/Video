@@ -84,8 +84,6 @@ public class UDiskFragment extends Fragment {
 
     public final  static String  USB_DEVICE_ATTACHED="android.hardware.usb.action.USB_DEVICE_ATTACHED";
     public final  static String USB_DEVICE_DETACHED="android.hardware.usb.action.USB_DEVICE_DETACHED";
-    public final  static  String  USB_MEDIA_MOUNTED="android.intent.action.MEDIA_MOUNTED";
-    public final  static String USB_MEDIA_UNMOUNTED="android.intent.action.MEDIA_UNMOUNTED";
 
     public final static String ACTION_USB_PERMISSION="com.android.example.USB_PERMISSION";
     private static UsbManager usbManager;
@@ -100,10 +98,9 @@ public class UDiskFragment extends Fragment {
     private final  static int NOUDISK=6;//没U盘插入
     private static Context mContext;
     private static List<Video> videoList=new ArrayList<>();//播放的视频列表
-  //  private final  static String UDISK_MOUNT_ADDRESS="/mnt/usb";//u盘的挂载地址（手动挂载地址）"/mnt/sdcard/mnt/usb"//"/storage/A63E-2DC8
-  private final  static String UDISK_MOUNT_ADDRESS="/storage/A63E-2DC8";
-    private static String UDISK_MOUNT_POINT=null;//U盘的挂载点
-    private final static String UDISK_PROC_MOUNTS="/proc/mounts";//系统中挂载的所有目录
+  private   static String UDISK_MOUNT_ADDRESS=null;
+  private static boolean isLoading=false;//是否正在加载
+    private final static String SD_DIRECTORY="/storage";
     private static boolean isStart=false;//判断是否启动了
     @SuppressLint("HandlerLeak")
     private static Handler mhandler=new Handler(){
@@ -143,6 +140,7 @@ public class UDiskFragment extends Fragment {
                         uDiskTipMessage.setText("空空如也");
                         uDiskTipMessage.setVisibility(View.VISIBLE);
                     }
+                    uDiskVideoRefresh.setRefreshing(false);
                     break;
                 case REFRESH:
                     loadingLayout.setVisibility(View.GONE);
@@ -181,6 +179,7 @@ public class UDiskFragment extends Fragment {
     private static ListView videoListView;
     private static UdiskAdapter udiskAdapter;
     private static LinearLayout loadingLayout;
+    private static Runnable getMountAddressRunnable;
 
     public static void setmContext(Context mContext) {
         UDiskFragment.mContext = mContext;
@@ -192,15 +191,28 @@ public class UDiskFragment extends Fragment {
         View view=inflater.inflate(R.layout.u_disk_fragment,container,false);
         initView(view);
         initOnclickListener();
-
-        if(videoList.size()>0){
-            uDiskTipMessage.setVisibility(View.GONE);
-            udiskAdapter = new UdiskAdapter(videoList,this.getContext());
-            videoListView.setAdapter(udiskAdapter);
+        if(isLoading){
+            mhandler.sendEmptyMessage(RELOADVIDEOLIST);
+            mhandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(isLoading){
+                         mhandler.postDelayed(this,100);
+                    }else{
+                        mhandler.removeCallbacks(this);
+                        mhandler.sendEmptyMessage(LOADVIDEOLIST);
+                    }
+                }
+            });
         }else{
-
-            uDiskTipMessage.setVisibility(View.VISIBLE);
-            uDiskTipMessage.callOnClick();
+            if(videoList.size()>0){
+                uDiskTipMessage.setVisibility(View.GONE);
+                udiskAdapter = new UdiskAdapter(videoList,this.getContext());
+                videoListView.setAdapter(udiskAdapter);
+            }else{
+                uDiskTipMessage.setVisibility(View.VISIBLE);
+                uDiskTipMessage.callOnClick();
+            }
         }
         isStart=true;
         return view;
@@ -213,8 +225,12 @@ public class UDiskFragment extends Fragment {
               new Thread(new Runnable() {
                   @Override
                   public void run() {
-                          if (getUdiskAudioList()) {
-                              mhandler.sendEmptyMessage(REFRESH);
+                          if (isMountSuccess()) {
+                              if(getUdiskAudioList()){
+                                  mhandler.sendEmptyMessage(REFRESH);
+                              }else{
+                                  mhandler.sendEmptyMessage(READFAIL);
+                              }
                           } else {
                               mhandler.sendEmptyMessage(READFAIL);
                           }
@@ -240,11 +256,20 @@ public class UDiskFragment extends Fragment {
                     public void run() {
                         synchronized (this){
                         mhandler.sendEmptyMessage(RELOADVIDEOLIST);
-                        if(getUdiskAudioList()){
-                            mhandler.sendEmptyMessageDelayed(REFRESH,500);
+                        if(isExistUdisk(getContext())){
+                            if(isMountSuccess()){
+                                if(getUdiskAudioList()){
+                                    mhandler.sendEmptyMessageDelayed(REFRESH,500);
+                                }else{
+                                    mhandler.sendEmptyMessageDelayed(READFAIL,500);
+                                }
+                            }else{
+                                mhandler.sendEmptyMessageDelayed(NOUDISK,500);
+                            }
                         }else{
                             mhandler.sendEmptyMessageDelayed(NOUDISK,500);
                         }
+
                     }
                     }
                 }).start();
@@ -272,27 +297,18 @@ public class UDiskFragment extends Fragment {
         public void onReceive(Context context, Intent intent) {
             Log.i(TAG, "onReceive: "+intent.getAction());
             if(mContext==null)
-            mContext=context;
+             mContext=context;
             String action=intent.getAction();
             if(action.equals(USB_DEVICE_ATTACHED)){
-
                   showUsbList(context);
             }else if(action.equals(USB_DEVICE_DETACHED)){
-                mhandler.sendEmptyMessage(UDISK_DETACHED);
+                mhandler.removeCallbacks(getMountAddressRunnable);
+                 UDISK_MOUNT_ADDRESS=null;
+                 videoList.clear();
+                 if(isStart)
+                 mhandler.sendEmptyMessage(UDISK_DETACHED);
+                 isLoading=false;
                 oneToast.showMessage(context,"设备拔出");
-            }
-            else if(action.equals(ACTION_USB_PERMISSION)){
-                synchronized (this){
-                    UsbDevice usbDevice=intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                     if(usbDevice!=null){
-                         if(intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED,false)){
-
-                             readDevice(context,usbDevice);
-                         }else{
-                             oneToast.showMessage(context,"获取权限失败");
-                         }
-                     }
-                }
             }
         }
     }
@@ -332,606 +348,174 @@ public class UDiskFragment extends Fragment {
         }
     }
 
-    //获取权限
-//    private synchronized static void getPermission(final Context context, final UsbDevice usbDevice) {
-//       if(usbManager.hasPermission(usbDevice)){//如果有读取权限
-//           readDevice(context,usbDevice);//读取U盘内容
-//           return;
-//       }else{
-//           if(alertDialog==null){
-//               AlertDialog.Builder builder=new AlertDialog.Builder(context).setTitle("U盘读取权限不可用").setMessage("由于Video需要读取U盘信息;\n否则，无法加载U盘里面的歌曲")
-//                       .setCancelable(false).setPositiveButton("立即开启", new DialogInterface.OnClickListener() {
-//                           @Override
-//                           public void onClick(DialogInterface dialog, int which) {
-//                               PendingIntent pendingIntent=PendingIntent.getBroadcast(context,1,new Intent(ACTION_USB_PERMISSION),0);
-//                               usbManager.requestPermission(usbDevice,pendingIntent);
-//                           }
-//                       }).setNegativeButton("拒绝", new DialogInterface.OnClickListener() {
-//                           @Override
-//                           public void onClick(DialogInterface dialog, int which) {
-//                               if(alertDialog!=null&&alertDialog.isShowing()){
-//                                   alertDialog.cancel();
-//                               }
-//                           oneToast.showMessage(context,"获取权限失败");
-//                           }
-//                       });
-//               alertDialog=builder.create();
-//               alertDialog.show();
-//           }else{
-//               alertDialog.show();
-//           }
-//
-//       }
-//    }
+
+    //判断是否存在U盘
+   public boolean isExistUdisk(Context context){
+       usbManager= (UsbManager) context.getSystemService(Context.USB_SERVICE);
+       HashMap<String,UsbDevice> deviceHashMap=usbManager.getDeviceList();//获取设备列表
+       if(deviceHashMap==null||deviceHashMap.size()==0){
+           return false;
+       }
+       Iterator<UsbDevice> deviceIterator=deviceHashMap.values().iterator();
+       while (deviceIterator.hasNext()){
+           UsbDevice usbDevice=deviceIterator.next();
+           Log.i(TAG, "deviceName: "+usbDevice.getDeviceName());
+           Log.i(TAG, "DeviceId: "+usbDevice.getDeviceId());
+           Log.i(TAG, "VendorId: "+usbDevice.getVendorId());
+           Log.i(TAG, "ProductId: "+usbDevice.getProductId());
+           Log.i(TAG, ""+usbDevice.getManufacturerName()+"//"+usbDevice.getProductName()+"//"+usbDevice.getSerialNumber()+"//"
+                   +usbDevice.getVersion()+"//");
+           int deviceClass=usbDevice.getDeviceClass();
+           if(deviceClass==0){
+               UsbInterface usbInterface=usbDevice.getInterface(deviceClass);
+               int InterfaceClass=usbInterface.getInterfaceClass();
+               if(InterfaceClass==8){
+                return  true;
+               }
+           }
+       }
+       return  false;
+   }
 
     //读取U盘信息(开启子线程读取）
     private synchronized static void readDevice(final Context context, final UsbDevice usbDevice) {
-        new Thread(new Runnable() {
+                    //获取挂载U盘地址
+                  if(isStart){
+                      mhandler.sendEmptyMessage(RELOADVIDEOLIST);
+                  }
+                   handMountUdiskAddress(context);
+    }
+
+    //挂载U盘地址
+    private static void handMountUdiskAddress(Context context){
+           isLoading=true;
+          getMountAddressRunnable = new Runnable() {
             @Override
             public void run() {
-                //获取U盘的挂载点
-                UDISK_MOUNT_POINT=getUdiskMountPoint();
-
-                //手动挂载U盘地址
-                if(UDISK_MOUNT_POINT!=null){
-                    if(handMountUdiskAddress(context)){
-                        Log.i(TAG, "U盘挂载成功");
-                        if(getUdiskAudioList()){
-                            Log.i(TAG, "获取U盘信息成功");
-                            for(Video video:videoList){
-                                Log.i(TAG, video.toString());
-                            }
-                            if(isStart){
-                                mhandler.sendEmptyMessage(LOADVIDEOLIST);
-                            }
-
-                        }else{
-                            Log.i(TAG, "获取U盘信息失败");
+                if(!isMountSuccess()){
+                    mhandler.postDelayed(this,100);
+                }else{
+                    mhandler.removeCallbacks(this);
+                    if(getUdiskAudioList()){
+                        if(isStart){
+                            mhandler.sendEmptyMessage(LOADVIDEOLIST);
                         }
                     }else{
-                        Log.i(TAG, "U盘挂载失败");
+                        if(isStart){
+                            mhandler.sendEmptyMessage(READFAIL);
+                        }
                     }
+                    isLoading=false;
                 }
             }
-        }).start();
-
-
-       // getUDiskMountAddress(context);
-//       new Thread(new Runnable() {
-//           @Override
-//           public void run() {
-//               readDeviceList(context);//用别人方法读取U盘列表
-//               UsbMassStorageDevice usbMassStorageDevice=getUsbMass(usbDevice);
-//               if(usbMassStorageDevice==null){
-//                   mhandler.sendEmptyMessage(readFail);
-//               }else{
-//                   if(readDeviceMessage(usbMassStorageDevice)){
-//                       mhandler.sendEmptyMessage(readSuccess);
-//                   }else{
-//                       mhandler.sendEmptyMessage(readFail);
-//                   }
-//
-//               }
-//           }
-//       }).start();
-    }
-
-    //获取U盘的挂载点
-    private static String getUdiskMountPoint(){
-
-       final String address="/proc/partitions";
-       final String prefixAddress="/dev/block/";
-       String uAddress=null;
-        File file=new File(address);
-        if(!file.exists()){
-            return null;
-        }else{
-            InputStreamReader reader=null;
-            BufferedReader bufferedReader=null;
-            try {
-                reader=new InputStreamReader(new FileInputStream(file));
-               bufferedReader=new BufferedReader(reader);
-               String lineText=null;
-               while((lineText=bufferedReader.readLine())!=null){
-                   if(lineText.contains("sd")){
-                       uAddress=lineText.substring(lineText.lastIndexOf("sd")).trim();
-                   }
-               }
-               return prefixAddress+uAddress;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-       return null;
-    }
-
-    //手动挂载U盘地址
-    private static boolean handMountUdiskAddress(Context context){
-     if(UDISK_MOUNT_POINT==null){
-         return false;
-     }
-     return  true;
-//         try {
-//
-//              Runtime runtime=Runtime.getRuntime();
-////             final Process process=runtime.exec("su root");
-////             try {
-////                 new Thread(new Runnable() {
-////                     @Override
-////                     public void run() {
-////
-////                         InputStream inputStream=process.getErrorStream();
-////                         BufferedReader bufferedReader=new BufferedReader(new InputStreamReader(inputStream));
-////                         String line=null;
-////                         try {
-////                             while((line=bufferedReader.readLine())!=null){
-////                                 Log.i(TAG, "handMountUdiskAddress: 1000");
-////                             }
-////                         }catch (Exception e){
-////                             e.printStackTrace();
-////                         }finally {
-////                             try {
-////                                 inputStream.close();
-////                             } catch (IOException e) {
-////                                 e.printStackTrace();
-////                             }
-////                         }
-////
-////                     }
-////                 }).start();
-////
-////                int result= process.waitFor();//等待输出结果
-////                 Log.i(TAG, result+"/////");
-////             } catch (InterruptedException e) {
-////                 e.printStackTrace();
-////                 return  false;
-////             }
-//
-//             if(!new File(UDISK_MOUNT_ADDRESS).exists()){
-//
-//                 if(!new File(UDISK_MOUNT_ADDRESS).mkdirs()){
-//                     return false;
-//                 }
-//             }
-//             Log.i(TAG, "handMountUdiskAddress: 22");
-//            Process process1= runtime.exec("mount "+UDISK_MOUNT_POINT+" "+UDISK_MOUNT_ADDRESS);
-//             Log.i(TAG, "handMountUdiskAddress: 33");
-//          InputStream inputStream1=process1.getErrorStream();
-//          BufferedReader bufferedReader1=new BufferedReader(new InputStreamReader(inputStream1));
-//          String line1=null;
-//          while((line1=bufferedReader1.readLine())!=null){
-//              Log.i(TAG, line1);
-//          }
-//             process1.waitFor();
-//             Log.i(TAG, "mount "+UDISK_MOUNT_POINT+" "+UDISK_MOUNT_ADDRESS);
-//             while(!isMountSuccess()){
-//
-//             }
-//             return true;
-//         } catch (IOException e) {
-//             e.printStackTrace();
-//             return false;
-//         } catch (InterruptedException e) {
-//             e.printStackTrace();
-//             return false;
-//         }
+        };
+      mhandler.post(getMountAddressRunnable);
     }
 
 
-    //判断是否挂载成功(需要判断 ”proc/mounts“ 文件中是否有U盘的挂载点路径）
+    //判断是否挂载成功
     private static boolean isMountSuccess(){
-        InputStream is=null;
-        InputStreamReader inputStreamReader=null;
-        BufferedReader br=null;
-     try{
-        Runtime runtime=Runtime.getRuntime();
-        Process proc=runtime.exec("mount");
-         is=proc.getInputStream();
-         inputStreamReader=new InputStreamReader(is);
-        String line=null;
-         br=new BufferedReader(inputStreamReader);
-        while((line=br.readLine())!=null){
-            if(line.split(" ")[0].toLowerCase().contentEquals(UDISK_MOUNT_POINT)){//如果挂载点存在
-                return  true;
-            }
-        }
-     }catch (Exception e){
-     e.printStackTrace();
-     return false;
-     }
-     finally {
-         try {
-             br.close();
-         } catch (IOException e) {
-             e.printStackTrace();
+         try{
+             File file=new File(SD_DIRECTORY);
+             if(!file.exists()||file.isFile())
+             {
+                 return false;
+             }
+             File[] files=file.listFiles();
+             for(File file1:files){
+                 if(!file1.getAbsolutePath().contentEquals("/storage/emulated")&&!file1.getAbsolutePath().contentEquals("/storage/self")){
+                     UDISK_MOUNT_ADDRESS=file1.getAbsolutePath();
+                     return true;
+                 }
+             }
+         }catch (Exception e){
+             Log.i("movie1111", e.getMessage());
+             return false;
          }
-         try {
-             inputStreamReader.close();
-         } catch (IOException e) {
-             e.printStackTrace();
-         }
-         try {
-             is.close();
-         } catch (IOException e) {
-             e.printStackTrace();
-         }
-
-     }
-   return false;
+         return false;
     }
+
 
 
     //获取U盘里面的视频列表
     private  synchronized  static  boolean getUdiskAudioList(){
+       if(UDISK_MOUNT_ADDRESS==null){
+           return false;
+       }
         videoList.clear();
        File file=new File(UDISK_MOUNT_ADDRESS);
        if(!file.exists()||file.isFile()){
        return false;
        }else{
-         File[] files=file.listFiles();
-         for(File file1:files){
-          if(file1.isFile()&&FileManger.isVideo(file1))
-          {
-              Video video=new Video();
-              video.setVideoPath(file1.getAbsolutePath());
-              video.setVideoName(file1.getName());
-              video.setSize(FileManger.getSize(file1.getAbsolutePath()));
-              video.setDate(FileManger.getDate(file1.getAbsolutePath()));
-              video.setDuration(FileManger.getVideoDuration(file1.getAbsolutePath()));
-              video.setThumbnail(FileManger.getVideoThumbnailThree(file1.getAbsolutePath(), MediaStore.Images.Thumbnails.MICRO_KIND));
-              videoList.add(video);
-          }
-          else if(file1.isDirectory()){
-              List<File> fileList=getAllFiles(file1);//获取一个目录下的所有可支持的视频文件,且视频不存在列表中
-              if(fileList==null){
-                  continue;
-              }
-              for(File file2:fileList){
-                  Video video=new Video();
-                  video.setVideoPath(file2.getAbsolutePath());
-                  video.setVideoName(file2.getName());
-                  video.setSize(FileManger.getSize(file2.getAbsolutePath()));
-                  video.setDate(FileManger.getDate(file2.getAbsolutePath()));
-                  video.setDuration(FileManger.getVideoDuration(file2.getAbsolutePath()));
-                  video.setThumbnail(FileManger.getVideoThumbnailThree(file2.getAbsolutePath(), MediaStore.Images.Thumbnails.MICRO_KIND));
-                videoList.add(video);
-              }
+           try{
+               File[] files=file.listFiles();
 
-          }
-         }
+               for(File file1:files){
+                   Log.i("movie1112", "getUdiskAudioList: 11");
+                   if(file1.isFile()&&FileManger.isVideo(file1))
+                   { Log.i("movie1112", "getUdiskAudioList: 22");
+                       Video video=new Video();
+                       video.setVideoPath(file1.getAbsolutePath());
+                       video.setVideoName(file1.getName());
+                       video.setSize(FileManger.getSize(file1.getAbsolutePath()));
+                       video.setDate(FileManger.getDate(file1.getAbsolutePath()));
+                       video.setDuration(FileManger.getVideoDuration(file1.getAbsolutePath()));
+                       video.setThumbnail(FileManger.getVideoThumbnailThree(file1.getAbsolutePath(), MediaStore.Images.Thumbnails.MICRO_KIND));
+                       videoList.add(video);
+                       Log.i("movie1112", "getUdiskAudioList: 33");
+                   }
+                   else if(file1.isDirectory()){
+                       Log.i("movie1112", "getUdiskAudioList: 44");
+                       List<File> fileList=getAllFiles(file1);//获取一个目录下的所有可支持的视频文件,且视频不存在列表中
+                       if(fileList==null){
+                           continue;
+                       }
+                       Log.i("movie1112", "getUdiskAudioList: 55");
+                       for(File file2:fileList){
+                           Video video=new Video();
+                           video.setVideoPath(file2.getAbsolutePath());
+                           video.setVideoName(file2.getName());
+                           video.setSize(FileManger.getSize(file2.getAbsolutePath()));
+                           video.setDate(FileManger.getDate(file2.getAbsolutePath()));
+                           video.setDuration(FileManger.getVideoDuration(file2.getAbsolutePath()));
+                           video.setThumbnail(FileManger.getVideoThumbnailThree(file2.getAbsolutePath(), MediaStore.Images.Thumbnails.MICRO_KIND));
+                           videoList.add(video);
+                       }
+                       Log.i("movie1112", "getUdiskAudioList: 66");
+                   }
+               }
+           }catch (Exception e){
+               Log.i("movie1112", e.getMessage());
+               return false;
+           }
+
        }
        return true;
     }
 
     public static List<File> getAllFiles(File file){//获取一个目录下的所有可支持的视频文件
-        if(!file.exists()||file.isFile()){
+        try {
+            if(!file.exists()||file.isFile()){
+                return null;
+            }
+            List<File> files=new ArrayList<>();
+            File[] files1=file.listFiles();
+
+            for(File file1:files1){
+                if(file1.isFile()&&FileManger.isVideo(file1)){//如果为可支持的视频文件
+                    files.add(file1);
+                }else if(file1.isDirectory()){
+                    List<File> fileList=getAllFiles(file1);
+                    if(fileList!=null)
+                        files.addAll(fileList);
+                }
+            }
+            return files;
+        }catch (Exception e){
+            Log.i("movie1113", e.getMessage());
             return null;
         }
-        List<File> files=new ArrayList<>();
-        File[] files1=file.listFiles();
 
-        for(File file1:files1){
-            if(file1.isFile()&&FileManger.isVideo(file1)){//如果为可支持的视频文件
-                files.add(file1);
-            }else if(file1.isDirectory()){
-                List<File> fileList=getAllFiles(file1);
-                if(fileList!=null)
-                    files.addAll(fileList);
-            }
-        }
-        return files;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //获取U盘的挂载地址
-    private static String getUDiskMountAddress(Context context){
-
-       String address=null;
-      StorageManager storageManager= (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
-      try{
-        Class storeManagerClazz=Class.forName("android.os.storage.StorageManager");
-        Method getVolumesMethod=storeManagerClazz.getMethod("getVolumes");
-        List<?>  volumeInfos= (List<?>) getVolumesMethod.invoke(storageManager);
-        Class volumeInfoClazz=Class.forName("android.os.storage.VolumeInfo");
-        Method getTypeMethod=volumeInfoClazz.getMethod("getType");
-        Method getFsUuidMethod=volumeInfoClazz.getMethod("getFsUuid");
-
-        Field fsTypeField=volumeInfoClazz.getDeclaredField("fsType");
-        Field fsLabelField=volumeInfoClazz.getDeclaredField("fsLabel");
-          Field pathField=volumeInfoClazz.getDeclaredField("path");
-          Field  intetnalPath=volumeInfoClazz.getDeclaredField("internalPath");
-          if(volumeInfos!=null){
-              for(Object volumeInfo:volumeInfos){
-                  Log.i(TAG, "getUDiskMountAddress: "+volumeInfo.toString());
-                  String uuid= (String) getFsUuidMethod.invoke(volumeInfo);
-                  Log.i(TAG, "getUDiskMountAddress: "+(volumeInfo==null));
-                  if(uuid!=null){
-                      String fsTypeString= (String) fsTypeField.get(volumeInfo);//U盘类型
-                      String fsLabelString= (String) fsLabelField.get(volumeInfo);//U盘名称
-                      String pathString= (String) pathField.get(volumeInfo);//U盘路径
-                      String internalPathString= (String) intetnalPath.get(volumeInfo);//U盘路径
-                      StatFs statFs=new StatFs(pathString);
-                      long avainleSize=statFs.getAvailableBytes();//U盘可用空间
-                      long totalSize=statFs.getTotalBytes();//U盘总空间
-                      Log.i(TAG, "U盘类型:"+fsTypeString+"\n"+"U盘名称:"+fsLabelString+"\n"+"U盘路径:"+pathString+"\n"+"U盘路径:"+internalPathString+"\n"+
-                              "U盘可用空间:"+avainleSize+"\n"+  "U盘总空间:"+totalSize+"\n");
-                  }
-              }
-          }
-      }catch (Exception e){
-          e.printStackTrace();
-          return null;
-      }
-      return address;
-    }
-
-
-    private  synchronized  static void readDeviceList(Context context){
-        storageDevices=UsbMassStorageDevice.getMassStorageDevices(context);
-    }
-
-    //获取U盘列表中的UsbMassStorageDevice对象
-    private static  UsbMassStorageDevice getUsbMass(UsbDevice usbDevice){
-       if(storageDevices==null||storageDevices.length==0){
-           return  null;
-       }else{
-           for(UsbMassStorageDevice device:storageDevices){
-               if(device.getUsbDevice().equals(usbDevice)){
-                   return device;
-               }
-           }
-           return null;
-       }
-    }
-
-
-
-
-
-
-    //读取U盘的信息
-    private static boolean readDeviceMessage(UsbMassStorageDevice device){
-       device=null;
-       if(device==null){
-           return false;
-       }
-       try{
-
-           device.init();//初始化
-            //获取分区
-           List<Partition> partitions=device.getPartitions();
-           if(partitions.size()==0){//读取分区失败，只支持FAT格式，不支持NTFS格式，exfat格式不知道
-               Log.i(TAG, "读取分区失败");
-               return false;
-           }
-           //仅使用第一分区
-           FileSystem fileSystem=partitions.get(0).getFileSystem();
-           UsbFile root=fileSystem.getRootDirectory();//设置当前文件对象为根目录
-           if(readFile(root)){
-               return true;
-           }else{
-               return false;
-           }
-       }catch (Exception e){
-           e.printStackTrace();
-           return false;
-       }finally {
-           device.getPartitions().stream().close();
-       }
-    }
-
-    //读取文件
-    private static boolean readFile(UsbFile root) {
-        try{
-            ArrayList<UsbFile> usbFiles = new ArrayList<>(Arrays.asList(root.listFiles()));
-            Collections.sort(usbFiles,new Comparator<UsbFile>(){//简单排序，文件夹在前，文件在后
-                @Override
-                public int compare(UsbFile o1, UsbFile o2) {
-                    if(o1.isDirectory()){
-                        return -1;
-                    }else
-                    {
-                        return 1;
-                    }
-                }
-            });
-            videoList.clear();//播放列表清空
-          final String savePathPrefix= VideoDownload.initVideoPathPrefix()+"USB/";
-           if(!new File(savePathPrefix).exists()){
-               new File(savePathPrefix).mkdirs();
-           }
-            for(UsbFile usbFile:usbFiles){
-              if(usbFile.isDirectory()){
-                ArrayList<UsbFile> usbFileArrayList=getDirectoryUsbFile(usbFile);
-                if(usbFileArrayList==null){
-                    continue;
-                }else{
-                    for(UsbFile usbFile1:usbFileArrayList){
-                        String path=getUsbFilePath(usbFile1);
-                        if(path!=null){
-                          //  int index=1;
-                            Log.i(TAG, usbFile.getLength()+"");
-                         String savePath= savePathPrefix+path+usbFile1.getName();
-                         while(new File(savePath).exists()){
-                             continue;
-//                           savePath=savePathPrefix+path+index+"_"+usbFile1.getName();
-//                           index++;
-                         }
-
-                         if(!new File(savePathPrefix+path).exists()){
-                             new File(savePathPrefix+path).mkdirs();
-                         }
-                         Video video=new Video();
-                         video.setVideoPath(savePath);
-                         video.setVideoName(usbFile1.getName());
-                         videoList.add(video);
-                            if(copyFile(savePath,usbFile1)){//复制视频到本地成功
-                                Log.i(TAG, savePath+" 复制成功");
-                            }else{
-                                Log.i(TAG, savePath+" 复制失败");
-                            }
-                        }
-                    }
-                }
-              }else{
-                  if(FileManger.isVideoPath(usbFile.getName())){
-                      String path=getUsbFilePath(usbFile);
-                      if(path!=null){
-                         // int index=1;
-                          String savePath= savePathPrefix+path+usbFile.getName();
-                          while(new File(savePath).exists()){
-                              continue;
-                            // savePath=savePathPrefix+path+index+"_"+usbFile.getName();
-                            //  index++;
-                          }
-                          if(!new File(savePathPrefix+path).exists()){
-                              new File(savePathPrefix+path).mkdirs();
-                          }
-                          Video video=new Video();
-                          video.setVideoPath(savePath);
-                          video.setVideoName(usbFile.getName());
-                          videoList.add(video);
-                          if(copyFile(savePath,usbFile)){//复制视频到本地成功
-                              Log.i(TAG, savePath+" 复制成功");
-                          }else{
-                              Log.i(TAG, savePath+" 复制失败");
-                          }
-                      }
-                      }
-                  }
-
-              }
-            return true;
-        }catch (Exception e){
-         e.printStackTrace();
-         return false;
-        }
-    }
-
-    //获取目录下的所有视频文件
-    private static   ArrayList<UsbFile> getDirectoryUsbFile(UsbFile usbFile){
-       if(usbFile==null||!usbFile.isDirectory()){
-           return null;
-       }else{
-              ArrayList<UsbFile> usbFileArrayList=new ArrayList<>();
-           try {
-               ArrayList<UsbFile> usbFiles=new ArrayList<>(Arrays.asList(usbFile.listFiles()));
-               for(UsbFile usbFile1:usbFiles){
-                   if(usbFile1.isDirectory()){//如果是目录
-                       usbFileArrayList.addAll(getDirectoryUsbFile(usbFile1));
-                   }else{
-                       if(FileManger.isVideoPath(usbFile1.getName()))//如果是可支持的视频文件
-                       usbFileArrayList.add(usbFile1);
-                   }
-               }
-               return  usbFileArrayList;
-           } catch (IOException e) {
-               e.printStackTrace();
-               return null;
-           }
-       }
-    }
-
-
-    //文件获取相对于根目录的路径
-    private static String getUsbFilePath(UsbFile usbFile){
-       StringBuilder path= new StringBuilder();
-     if(usbFile.isDirectory()){
-         return null;
-     }
-     else{
-         List<String> dirName=new ArrayList<>();
-         UsbFile usbFile1=usbFile;
-         while (usbFile1.getParent()!=null&&!usbFile1.getParent().isRoot())
-         {
-             dirName.add(usbFile1.getParent().getName());
-             usbFile1=usbFile1.getParent();
-         }
-
-         for(int i=dirName.size()-1;i>=0;i--){
-             path.append(dirName.get(i)).append("/");
-         }
-return path.toString();
-     }
-    }
-
-    private static boolean copyFile(String saveLocalPath,UsbFile usbFile){
-       if(usbFile.isDirectory()|| TextUtils.isEmpty(saveLocalPath)){
-           return false;
-       }
-        FileOutputStream os=null;
-        InputStream inputStream=null;
-        File saveFile=new File(saveLocalPath);
-        try {
-            if(!saveFile.exists()){
-               saveFile.createNewFile();
-            }
-
-            os=new FileOutputStream(saveFile,false);
-             inputStream=new UsbFileInputStream(usbFile);
-             int byresRead=0;
-             byte[] buffer=new byte[1024*8];
-             while((byresRead=inputStream.read(buffer))!=-1){
-                 os.write(buffer,0,byresRead);
-             }
-             os.flush();
-        } catch (Exception e) {
-            e.printStackTrace();
-            saveFile.delete();
-            return false;
-        }finally {
-            if(os!=null){
-                try {
-                    os.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if(inputStream!=null){
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return true;
-    }
-
-    //关闭流
-    private void closeStream(){
-       if(storageDevices==null||storageDevices.length==0){
-           return;
-       }
-       else{
-           for(UsbMassStorageDevice s:storageDevices){
-               s.getPartitions().stream().close();
-           }
-       }
-    }
 }

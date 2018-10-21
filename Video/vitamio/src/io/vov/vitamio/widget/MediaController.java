@@ -140,9 +140,10 @@ public class MediaController extends FrameLayout {
           hide();
           break;
         case SHOW_PROGRESS:
-          android.util.Log.i("movie2", "handleMessage: 进度条");
+
           pos = setProgress();
-          if (!mDragging && mShowing) {
+          android.util.Log.i("movie2", "handleMessage: 进度条"+pos);
+          if (mShowing) {//mDragging(改了）
             msg = obtainMessage(SHOW_PROGRESS);
             sendMessageDelayed(msg, 1000 - (pos % 1000));
             updatePausePlay();
@@ -1096,7 +1097,7 @@ public void showNoAnimal(){
     }
 
       showControl();
-    updatePausePlay();
+     updatePausePlay();
     mHandler.sendEmptyMessage(SHOW_PROGRESS);
 //      if(mPlayer.isPlaying()){
 //        mHandler.sendEmptyMessage(SHOW_PROGRESS);
@@ -1148,7 +1149,7 @@ public void showNoAnimal(){
   }
 
   public long setProgress() {
-    if (mPlayer == null || mDragging)
+    if (mPlayer == null)//mDragging
       return 0;
     long position=mPlayer.getCurrentPosition();
     mCurrentProgress=position;
