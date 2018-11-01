@@ -44,9 +44,9 @@ public class VideoCollectOperation {
          try{
              if(isExistsVideoSave(saveVideoPath))
              {
-                 sqLiteDatabase.execSQL("update "+videoDownTableName+" set VIDEO_DOWNLOAD_PATH=? where VIDEO_SAVE_PATH=?",new String[]{downloadVideoPath,saveVideoPath});
+                 sqLiteDatabase.execSQL("update "+videoDownTableName+" set VIDEO_DOWNLOAD_PATH=?,VIDEO_MODIFY_TIME=? where VIDEO_SAVE_PATH=? ",new String[]{downloadVideoPath, String.valueOf(System.currentTimeMillis()),saveVideoPath});
              }else{
-                 sqLiteDatabase.execSQL("insert into "+videoDownTableName+"(VIDEO_SAVE_PATH,VIDEO_DOWNLOAD_PATH) values (?,?)",new String[]{saveVideoPath,downloadVideoPath});
+                 sqLiteDatabase.execSQL("insert into "+videoDownTableName+"(VIDEO_SAVE_PATH,VIDEO_MODIFY_TIME,VIDEO_DOWNLOAD_PATH) values (?,?,?)",new String[]{saveVideoPath, String.valueOf(System.currentTimeMillis()),downloadVideoPath});
              }
              sqLiteDatabase.setTransactionSuccessful();
 
@@ -75,13 +75,15 @@ public class VideoCollectOperation {
                     Log.i("movie2", "下载路径获取失败");
                 }else{
                     SQLiteDatabase sqLiteDatabase= videoCollectDatabaseHelper.getWritableDatabase();
-                    Cursor cursor= sqLiteDatabase.rawQuery("select * from "+videoDownTableName,null);
+                    Cursor cursor= sqLiteDatabase.rawQuery("select * from "+videoDownTableName+" order by VIDEO_MODIFY_TIME asc",null);
                     if(cursor.moveToFirst()){
                         do{
                             String path=cursor.getString(cursor.getColumnIndex("VIDEO_SAVE_PATH"));
+                            String modify=Video.ConvertDate((long) cursor.getFloat(cursor.getColumnIndex("VIDEO_MODIFY_TIME")));//修改时间
                             File file1=new File(path);
                             if(file1.exists()&&file1.isFile())
                             {
+                                Log.i("dsfsadf", "run: "+path+"//"+modify);
                                 Video video=new Video();
                                 video.setVideoPath(path);
                                 video.setSize(file1.length());
@@ -93,6 +95,9 @@ public class VideoCollectOperation {
                     }
                     Log.i("movie2", "当前下载视频总的大小为："+currentDownVideoTotalSize+"//"+currentDownVideoTotalSize/1024/1024+"M"+"\n总的视频个数为：" +
                             ""+downVideoPaths.size());
+
+
+
                     if(currentDownVideoTotalSize>MAX_DOWNVIDEO_TOTAL_SIZE){//如果下载视频的总大小大于1G
                         for(Video video:downVideoPaths){
                             String path=video.getVideoPath();
@@ -118,6 +123,26 @@ public class VideoCollectOperation {
         }).start();
 
     }
+
+    //修改下载视频的修改时间
+    public synchronized  void modifyDownloadVideoModifyTime(String saveVideoPath){
+
+         SQLiteDatabase sqLiteDatabase=videoCollectDatabaseHelper.getWritableDatabase();
+         sqLiteDatabase.beginTransaction();
+         try{
+             sqLiteDatabase.execSQL("update "+videoDownTableName+" set VIDEO_MODIFY_TIME=? where VIDEO_SAVE_PATH=?",new String[]{String.valueOf(System.currentTimeMillis()),saveVideoPath});
+             sqLiteDatabase.setTransactionSuccessful();
+         }catch (Exception e){
+         e.printStackTrace();
+         }finally {
+             sqLiteDatabase.endTransaction();
+             sqLiteDatabase.close();
+         }
+    }
+
+
+
+
 
 
 
