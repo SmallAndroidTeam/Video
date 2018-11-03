@@ -48,6 +48,8 @@ import com.of.vmvideo.saveDate.SaveCollectFragment;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -305,12 +307,18 @@ public class UDiskFragment extends Fragment {
             }else if(action.equals(USB_DEVICE_DETACHED)){
                 mhandler.removeCallbacks(getMountAddressRunnable);
                  UDISK_MOUNT_ADDRESS=null;
+
                 videoList.clear();
+
                 if(isStart)
                     mhandler.sendEmptyMessage(UDISK_DETACHED);
+
                 isLoading=false;
+
                 updateMessage();
                 oneToast.showMessage(context,"设备拔出");
+
+                showUsbList(context);//再重新加载
             }
         }
     }
@@ -407,6 +415,8 @@ public class UDiskFragment extends Fragment {
                    handMountUdiskAddress(context);
     }
 
+
+
     //挂载U盘地址
     private static void handMountUdiskAddress(Context context){
            isLoading=true;
@@ -417,6 +427,7 @@ public class UDiskFragment extends Fragment {
                     mhandler.postDelayed(this,100);
                 }else{
                     mhandler.removeCallbacks(this);
+
                     if(getUdiskAudioList()){
                         if(isStart){
                             mhandler.sendEmptyMessage(LOADVIDEOLIST);
@@ -434,47 +445,141 @@ public class UDiskFragment extends Fragment {
     }
 
 
+
+
+
+
+
     //判断是否挂载成功
     private static boolean isMountSuccess(){
-         try{
-             File file=new File(SD_DIRECTORY);
-             if(!file.exists()||file.isFile())
-             {
-                 return false;
-             }
-             File[] files=file.listFiles();
-             for(File file1:files){
-                 if(!file1.getAbsolutePath().contentEquals("/storage/emulated")&&!file1.getAbsolutePath().contentEquals("/storage/self")){
-                     UDISK_MOUNT_ADDRESS=file1.getAbsolutePath();
-                     return true;
-                 }
-             }
-         }catch (Exception e){
-             Log.i("movie1111", e.getMessage());
-             return false;
-         }
-         return false;
+       String ROOT_PATH="/storage/";
+        String UDISK_MOUNT_POINT="/dev/block/vold/public";//只支持android8.0  //  /dev/block/vold/public:8,1
+        InputStream is=null;
+        InputStreamReader inputStreamReader=null;
+        BufferedReader br=null;
+        try{
+            Runtime runtime=Runtime.getRuntime();
+            Process proc=runtime.exec("mount");
+            is=proc.getInputStream();
+            inputStreamReader=new InputStreamReader(is);
+            String line=null;
+            br=new BufferedReader(inputStreamReader);
+            while((line=br.readLine())!=null){
+                if(line.split(" ")[0].toLowerCase().contains(UDISK_MOUNT_POINT)){//如果挂载点存在
+//                   String[] split=line.split(" ")[2].split("/");
+//                   String dirName=split[split.length-1];
+//                   String storagePath=ROOT_PATH+dirName;
+//                    Log.i("video111", "isMountSuccess: "+storagePath);
+//                    File file1=new File(storagePath);
+//                    if(file1.exists()&&file1.isDirectory()){
+//                        UDISK_MOUNT_ADDRESS=storagePath;
+//                        return true;
+//                    }
+
+                    UDISK_MOUNT_ADDRESS= line.split(" ")[2];
+                    return true;
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            return false;
+        }
+        finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                inputStreamReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return false;
     }
+
+
+
+//获取系统权限
+       public static  boolean getRoot(){
+       try{
+           Runtime runtime=Runtime.getRuntime();
+           Log.i("video111", "getRoot: 333");
+           final Process process=runtime.exec("su root");
+           Log.i("video111", "getRoot: 222");
+           try {
+               new Thread(new Runnable() {
+                   @Override
+                   public void run() {
+
+                       InputStream inputStream=process.getErrorStream();
+                       BufferedReader bufferedReader=new BufferedReader(new InputStreamReader(inputStream));
+                       String line=null;
+                       try {
+                           while((line=bufferedReader.readLine())!=null){
+                               Log.i(TAG, "handMountUdiskAddress: 1000");
+                           }
+                       }catch (Exception e){
+                           e.printStackTrace();
+                       }finally {
+                           try {
+                               inputStream.close();
+                           } catch (IOException e) {
+                               e.printStackTrace();
+                           }
+                       }
+
+                   }
+               }).start();
+               int result= process.waitFor();//等待输出结果
+               return true;
+           } catch (InterruptedException e) {
+               e.printStackTrace();
+               return  false;
+           }
+
+       }catch (Exception e){
+           e.printStackTrace();
+           Log.i("video111", "getRoot: 11");
+           return false;
+       }
+       }
+
 
 
 
     //获取U盘里面的视频列表
     private  synchronized  static  boolean getUdiskAudioList(){
+
        if(UDISK_MOUNT_ADDRESS==null){
            return false;
        }
+        Log.i("video111", "getUdiskAudioList: "+UDISK_MOUNT_ADDRESS);
+       // /mnt/media_rw/A63E-2DC8
+//        if(!getRoot()){
+//           return false;
+//        }
         videoList.clear();
+        String result=null;
        File file=new File(UDISK_MOUNT_ADDRESS);
        if(!file.exists()||file.isFile()){
+
        return false;
        }else{
            try{
                File[] files=file.listFiles();
 
                for(File file1:files){
-                   Log.i("movie1112", "getUdiskAudioList: 11");
+                   Log.i("video111", "getUdiskAudioList: 11");
                    if(file1.isFile()&& FileManger.isVideo(file1))
-                   { Log.i("movie1112", "getUdiskAudioList: 22");
+                   { Log.i("video111", "getUdiskAudioList: 22");
                        Video video=new Video();
                        video.setVideoPath(file1.getAbsolutePath());
                        video.setVideoName(file1.getName());
@@ -483,15 +588,15 @@ public class UDiskFragment extends Fragment {
                        video.setDuration(FileManger.getVideoDuration(file1.getAbsolutePath()));
                        video.setThumbnail(FileManger.getVideoThumbnailThree(file1.getAbsolutePath(), MediaStore.Images.Thumbnails.MICRO_KIND));
                        videoList.add(video);
-                       Log.i("movie1112", "getUdiskAudioList: 33");
+                       Log.i("video111", "getUdiskAudioList: 33");
                    }
                    else if(file1.isDirectory()){
-                       Log.i("movie1112", "getUdiskAudioList: 44");
+                       Log.i("video111", "getUdiskAudioList: 44");
                        List<File> fileList=getAllFiles(file1);//获取一个目录下的所有可支持的视频文件,且视频不存在列表中
                        if(fileList==null){
                            continue;
                        }
-                       Log.i("movie1112", "getUdiskAudioList: 55");
+                       Log.i("video111", "getUdiskAudioList: 55");
                        for(File file2:fileList){
                            Video video=new Video();
                            video.setVideoPath(file2.getAbsolutePath());
@@ -502,11 +607,12 @@ public class UDiskFragment extends Fragment {
                            video.setThumbnail(FileManger.getVideoThumbnailThree(file2.getAbsolutePath(), MediaStore.Images.Thumbnails.MICRO_KIND));
                            videoList.add(video);
                        }
-                       Log.i("movie1112", "getUdiskAudioList: 66");
+                       Log.i("video111", "getUdiskAudioList: 66");
                    }
                }
            }catch (Exception e){
-               Log.i("movie1112", e.getMessage());
+               Log.i("video111", e.getMessage());
+
                return false;
            }
 
