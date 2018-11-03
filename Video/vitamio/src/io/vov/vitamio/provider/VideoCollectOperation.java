@@ -71,7 +71,7 @@ public class VideoCollectOperation {
                 File file=new File(DownLoadPath);
                 List<Video> downVideoPaths=new ArrayList<>();//存储视频的下载地址
                 double currentDownVideoTotalSize=0;//当前下载视频的总的大小
-                if(!file.exists()||file.isFile()){
+                if(!file.exists()||file.isDirectory()){
                     Log.i("movie2", "下载路径获取失败");
                 }else{
                     SQLiteDatabase sqLiteDatabase= videoCollectDatabaseHelper.getWritableDatabase();
